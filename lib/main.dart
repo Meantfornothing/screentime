@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-
-// 1. Import the service locator function from the core layer
+// Core imports
 import 'core/service_locator.dart' as di; 
-// 2. Import the screen you want to display first
-import 'features/app_recommendation/presentation/pages/categorization_screen.dart'; 
+import 'core/routes.dart';
+
+// Presentation Layer imports
+import 'features/app_recommendation/presentation/pages/main_wrapper.dart';
+import 'features/app_recommendation/presentation/pages/dashboard_screen.dart';
+import 'features/app_recommendation/presentation/pages/categorization_screen.dart';
+
 
 void main() {
-  // MUST be called before any calls to native services or packages 
-  // (like Firebase, or our Platform Channel setup later).
+  // 1. Ensure Flutter widgets are initialized before services
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 3. Initialize all dependencies (Data Source, Repositories, Use Cases)
-  // This executes the logic inside lib/core/service_locator.dart
+  // 2. Initialize all dependencies (from lib/core/service_locator.dart)
   di.init(); 
   
   runApp(const MyApp());
@@ -23,16 +25,26 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Usage Monitor App',
+      title: 'ScreenTime Monitor', // Updated title
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        // Using Inter font for modern aesthetics
         fontFamily: 'Inter',
         useMaterial3: true,
       ),
-      // 4. Set the home to your starting screen
-      home: const CategorizationScreen(), 
+      
+      // Use named routes for clean navigation
+      initialRoute: AppRoutes.mainWrapper,
+      routes: {
+        // Main wrapper hosts the Bottom Nav Bar and is the starting screen
+        AppRoutes.mainWrapper: (context) => const MainWrapper(),
+        
+        // Defining these pages here allows them to be navigated to directly
+        // if needed, though they are primarily loaded by the MainWrapper's IndexedStack.
+        AppRoutes.dashboard: (context) => const DashboardScreen(),
+        AppRoutes.categorization: (context) => const CategorizationScreen(),
+        // AppRoutes.settings: (context) => const SettingsScreen(), // Add Settings when you create it
+      },
     );
   }
 }
