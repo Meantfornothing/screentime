@@ -1,21 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:screentime/core/routes.dart';
 import 'dashboard_screen.dart';
 import 'categorization_screen.dart';
-import 'settings_screen.dart'; // We will create this as a placeholder n
-
-
-// Placeholder for the Settings Screen
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Settings Screen', style: TextStyle(fontSize: 24)),
-    );
-  }
-}
-
+// FIX: Import the real SettingsScreen file
+import 'settings_screen.dart'; 
 
 class MainWrapper extends StatefulWidget {
   const MainWrapper({super.key});
@@ -25,12 +12,12 @@ class MainWrapper extends StatefulWidget {
 }
 
 class _MainWrapperState extends State<MainWrapper> {
-  int _currentIndex = 0;
+  int _currentIndex = 0; // 0: Dashboard, 1: Categorization, 2: Settings
 
   final List<Widget> _screens = [
     const DashboardScreen(),
-    const CategorizationScreen(),
-    const SettingsScreen(),
+    const CategorizationScreen(), 
+    const SettingsScreen(), // Now refers to the real screen from settings_screen.dart
   ];
 
   void _onItemTapped(int index) {
@@ -42,19 +29,18 @@ class _MainWrapperState extends State<MainWrapper> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_getAppBarTitle(_currentIndex)),
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
-      ),
+      // AppBar is null to allow screens to control their own headers/safe areas
+      appBar: null, 
+      
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
       ),
+      
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onItemTapped,
-        selectedItemColor: Colors.blueAccent,
+        selectedItemColor: const Color(0xFFD4AF98), // Updated to match your beige/brown theme
         unselectedItemColor: Colors.grey,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -72,14 +58,5 @@ class _MainWrapperState extends State<MainWrapper> {
         ],
       ),
     );
-  }
-  
-  String _getAppBarTitle(int index) {
-    switch (index) {
-      case 0: return 'Monitoring Dashboard';
-      case 1: return 'App Categorization';
-      case 2: return 'Settings';
-      default: return 'ScreenTime Monitor';
-    }
   }
 }
