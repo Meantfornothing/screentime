@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dashboard_screen.dart';
-import 'categorization_screen.dart';
-// FIX: Import the real SettingsScreen file
-import 'settings_screen.dart'; 
+import 'pages.dart';
 
 class MainWrapper extends StatefulWidget {
   const MainWrapper({super.key});

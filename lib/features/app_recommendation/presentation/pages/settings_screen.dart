@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 // Ensure these imports match your local widget files
-import '../widgets/setting_card.dart'; // Assuming chart.dart is now placeholder_chart.dart
-import '../widgets/slider_setting.dart'; // Assuming insight_card.dart is now insights_card.dart
-import '../widgets/timepicker_setting.dart';
+import '../widgets/widgets.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

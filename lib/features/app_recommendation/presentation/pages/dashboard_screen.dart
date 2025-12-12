@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-// Updated to use relative imports
-import '../../domain/entities/app_category_entity.dart';
-import '../../domain/entities/installed_app.dart';
+// --- Import Domain Entities ---
+import '../../domain/entities/entities.dart';
 
-// Ensure these imports match your local widget files
-import '../widgets/chart.dart'; // Assuming chart.dart is now placeholder_chart.dart
-import '../widgets/insight_card.dart'; // Assuming insight_card.dart is now insights_card.dart
-import '../widgets/recommendations_card.dart';
+// --- Import Feature Widgets ---
+import '../widgets/widgets.dart';
 
 // --- Placeholder Data to match the Dashboard design ---
 final String mockUserName = 'Olivia';

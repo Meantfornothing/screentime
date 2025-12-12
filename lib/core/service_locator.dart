@@ -1,30 +1,23 @@
 import 'package:get_it/get_it.dart';
 
-// Initialize GetIt as the Service Locator instance
+import '../features/app_recommendation/domain/repositories/categorization_repository.dart';
+import '../features/app_recommendation/data/repositories/categorization_repository_impl.dart'; // Note: preserved your filename typo 'catergorization'
+import '../features/app_recommendation/presentation/cubit/categorization_cubit.dart';
+
 final sl = GetIt.instance;
 
-/// Registers all necessary dependencies for the application.
-/// This function is called once at application startup (in main.dart).
-/// 
-/// We use registerLazySingleton for services that need to exist throughout 
-/// the app's lifetime (e.g., Repositories, Use Cases, Data Sources).
-void init() { 
-  // =================================================================
-  // 1. Feature: App Recommendation (Placeholder for future dependencies)
-  // =================================================================
-
-  // Domain Layer - Register Use Cases:
-  // sl.registerLazySingleton(() => GetNextAppRecommendation(sl()));
-
-  // Data Layer - Register Repositories:
-  // sl.registerLazySingleton<RecommendationRepository>(
-  //   () => RecommendationRepositoryImpl(sl()),
-  // );
-
-  // Data Layer - Register Data Sources:
-  // sl.registerLazySingleton<RecommendationLocalDataSource>(
-  //   () => RecommendationLocalDataSourceImpl(),
-  // );
+void init() {
+  // 1. Feature: App Recommendation
   
+  // Data Layer - Repositories
+  sl.registerLazySingleton<CategorizationRepository>(
+    () => CategorizationRepositoryImpl(),
+  );
+
+  // Presentation Layer - Cubits
+  sl.registerFactory(
+    () => CategorizationCubit(sl()),
+  );
+
   print("Service Locator initialized successfully.");
 }
