@@ -22,7 +22,6 @@ android {
         // FIX: Enable Core Library Desugaring
         isCoreLibraryDesugaringEnabled = true
         
-        // FIX: Update compatibility to Java 17 to match the JVM target
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -45,9 +44,9 @@ android {
     }
 }
 
-// FIX: Add the desugaring dependency
+// FIX: Add the desugaring dependency with the required version (2.1.4+)
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
 
 flutter {

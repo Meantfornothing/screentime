@@ -5,6 +5,9 @@ import '../../domain/entities/entities.dart';
 // --- Import Feature Widgets ---
 import '../widgets/widgets.dart';
 
+// --- Import Notification Service for Testing ---
+import '../../../../core/services/notification_service.dart';
+
 // --- Placeholder Data to match the Dashboard design ---
 final String mockUserName = 'Olivia';
 final String mockInsight = 'Omg did you know att du scrollar mkt? (You scroll a lot?)';
@@ -42,56 +45,73 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Note: The AppBar is managed by the MainWrapper now, so we only build the body.
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-        children: [
-          // Header
-          Text(
-            'Hi $mockUserName!',
-            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'This is your ....blabla',
-            style: TextStyle(fontSize: 16, color: Colors.black54),
-          ),
-          const SizedBox(height: 20),
-
-          // Large Visual Chart Placeholder (Mocked by an image placeholder)
-          const AspectRatio(
-            aspectRatio: 16 / 9,
-            child: PlaceholderChart(), // Used the correct public widget name
-          ),
-          const SizedBox(height: 16),
-
-          // Category Legend Dots
-          _buildCategoryLegend(),
-          const SizedBox(height: 30),
-
-          // Insights Section
-          const Text(
-            'Insights',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.black87),
-          ),
-          const SizedBox(height: 10),
-          InsightsCard(content: mockInsight),
-          const SizedBox(height: 30),
-
-          // Recommendations Section
-          const Text(
-            'Recommendations',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.black87),
-          ),
-          const SizedBox(height: 10),
-          RecommendationsCard(
-            content: mockRecommendation,
-            recommendedApps: mockAppsForRecommendation,
-            // FIX: Pass the required public function here
-            getCategoryColor: getCategoryColor, 
-          ),
-          const SizedBox(height: 30), // Extra space above bottom nav
-        ],
+    return Scaffold(
+      // FIX: Added FloatingActionButton for testing notifications
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await NotificationService.showNotification(
+            id: 999,
+            title: 'Test Notification',
+            body: 'This is a forced notification to verify the system works.',
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Notification Triggered!')),
+          );
+        },
+        backgroundColor: const Color(0xFFD4AF98),
+        child: const Icon(Icons.notifications_active),
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+          children: [
+            // Header
+            Text(
+              'Hi $mockUserName!',
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'This is your ....blabla',
+              style: TextStyle(fontSize: 16, color: Colors.black54),
+            ),
+            const SizedBox(height: 20),
+  
+            // Large Visual Chart Placeholder (Mocked by an image placeholder)
+            const AspectRatio(
+              aspectRatio: 16 / 9,
+              child: PlaceholderChart(), // Used the correct public widget name
+            ),
+            const SizedBox(height: 16),
+  
+            // Category Legend Dots
+            _buildCategoryLegend(),
+            const SizedBox(height: 30),
+  
+            // Insights Section
+            const Text(
+              'Insights',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.black87),
+            ),
+            const SizedBox(height: 10),
+            InsightsCard(content: mockInsight),
+            const SizedBox(height: 30),
+  
+            // Recommendations Section
+            const Text(
+              'Recommendations',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.black87),
+            ),
+            const SizedBox(height: 10),
+            RecommendationsCard(
+              content: mockRecommendation,
+              recommendedApps: mockAppsForRecommendation,
+              // FIX: Pass the required public function here
+              getCategoryColor: getCategoryColor, 
+            ),
+            const SizedBox(height: 30), // Extra space above bottom nav
+          ],
+        ),
       ),
     );
   }
