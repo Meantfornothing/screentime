@@ -38,7 +38,7 @@ void main() async {
     usageCheckTask, // Task Name
     frequency: const Duration(minutes: 15),
     constraints: Constraints(
-      networkType: NetworkType.not_required,
+      // FIX: Removed 'networkType: NetworkType.not_required' as it is now the default/implied
     ),
   );
   
