@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/repositories/categorization_repository.dart';
+import '../../domain/repositories/categorization_repository_interface.dart';
 import 'categorization_state.dart';
 
 class CategorizationCubit extends Cubit<CategorizationState> {

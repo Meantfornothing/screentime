@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/installed_app.dart';
+import '../../domain/entities/installed_app_entity.dart';
 
 
 /// The Recommendations Card showing the message and icons of recommended apps

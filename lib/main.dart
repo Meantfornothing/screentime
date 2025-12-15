@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart'; // Import Hive
 // Core imports
 import 'core/service_locator.dart' as di; 
 import 'core/routes.dart';
 
 // Presentation Layer imports
-import 'features/app_recommendation/presentation/pages/main_wrapper.dart';
-import 'features/app_recommendation/presentation/pages/dashboard_screen.dart';
-import 'features/app_recommendation/presentation/pages/categorization_screen.dart';
-import 'features/app_recommendation/presentation/pages/settings_screen.dart'; // Import Settings
+import 'features/app_recommendation/presentation/pages/pages.dart';
+
+// Import Entities for Adapter Registration
+import 'features/app_recommendation/domain/entities/entities.dart';
 
 
-void main() {
-  // 1. Ensure Flutter widgets are initialized before services
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 2. Initialize all dependencies
+  // 1. Initialize Hive
+  await Hive.initFlutter();
+
+  // 2. Register Adapters (We will add these to the entity files next)
+  Hive.registerAdapter(AppCategoryEntityAdapter());
+  Hive.registerAdapter(InstalledAppAdapter());
+
+  // 3. Open Boxes (Tables)
+  await Hive.openBox<AppCategoryEntity>('categories');
+  await Hive.openBox<InstalledApp>('installed_apps'); // To store assignments
+
+  // 4. Initialize Service Locator
   di.init(); 
   
   runApp(const MyApp());
@@ -32,7 +43,6 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         fontFamily: 'Inter',
         useMaterial3: true,
-        // Optional: Set the primary color to match your design globally
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFD4AF98)),
       ),
       
@@ -41,7 +51,6 @@ class MyApp extends StatelessWidget {
         AppRoutes.mainWrapper: (context) => const MainWrapper(),
         AppRoutes.dashboard: (context) => const DashboardScreen(),
         AppRoutes.categorization: (context) => const CategorizationScreen(),
-        // FIX: Register the settings route
         AppRoutes.settings: (context) => const SettingsScreen(),
       },
     );

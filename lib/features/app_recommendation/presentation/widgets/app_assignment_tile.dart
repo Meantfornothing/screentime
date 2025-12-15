@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/installed_app.dart';
-import '../../domain/entities/app_category_entity.dart';
+import '../../domain/entities/entities.dart';
+
 
 class AppAssignmentTile extends StatelessWidget {
   final InstalledApp app;

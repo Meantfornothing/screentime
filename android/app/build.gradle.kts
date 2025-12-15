@@ -23,7 +23,7 @@ android {
     compileSdk = flutter.compileSdkVersion
     
     // FIX 1: Removed the duplicated assignment operator ("ndkVersion = ")
-    ndkVersion = "26.0.10792818" 
+    ndkVersion = "27.0.12077973" 
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
