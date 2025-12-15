@@ -1,32 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:screentime/features/app_recommendation/domain/entities/installed_app.dart';
-import 'package:screentime/features/app_recommendation/domain/entities/app_category_entity.dart';
-// Import models needed by this widget
+import '../../domain/entities/installed_app.dart';
+import '../../domain/entities/app_category_entity.dart';
 
-/// Replicates the list tile for assigning a category to an app (Bottom section).
 class AppAssignmentTile extends StatelessWidget {
   final InstalledApp app;
-  final Function(String category) onAssignCategory;
+  final Function(String categoryName) onAssignCategory;
+  final Function(String newCategoryName) onAddNewCategory; // New callback
   final List<AppCategoryEntity> availableCategories;
 
   const AppAssignmentTile({
     required this.app,
     required this.onAssignCategory,
+    required this.onAddNewCategory,
     required this.availableCategories,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Determine the color for the assigned category chip based on mock data
-    // In a real app, this would use a color map based on the category name.
-    Color chipColor = app.assignedCategoryName == 'Productivity' ? Colors.green.shade100 : Colors.orange.shade100;
-    Color textColor = app.assignedCategoryName == 'Productivity' ? Colors.green.shade800 : Colors.orange.shade800;
+    Color chipColor = app.assignedCategoryName != null ? Colors.green.shade100 : Colors.grey.shade200;
+    Color textColor = app.assignedCategoryName != null ? Colors.green.shade800 : Colors.black54;
 
-    // Handle null case for uncategorized apps visually
-    if (app.assignedCategoryName == null) {
-      chipColor = Colors.grey.shade200;
-      textColor = Colors.black54;
+    // Mapping colors for known categories (Optional visual enhancement)
+    if (app.assignedCategoryName == 'Productivity') {
+      chipColor = Colors.green.shade100; textColor = Colors.green.shade800;
+    } else if (app.assignedCategoryName == 'Entertainment') {
+      chipColor = Colors.red.shade100; textColor = Colors.red.shade800;
+    } else if (app.assignedCategoryName == 'Relaxation') {
+      chipColor = Colors.blue.shade100; textColor = Colors.blue.shade800;
     }
 
     return Padding(
@@ -42,13 +43,14 @@ class AppAssignmentTile extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // App Name (Application A, B, C...)
-            Text(
-              app.name,
-              style: const TextStyle(fontSize: 16, color: Colors.black87),
+            Expanded(
+              child: Text(
+                app.name,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              ),
             ),
             
-            // Category Chip and Dropdown
             GestureDetector(
               onTap: () => _showCategorySelection(context),
               child: Container(
@@ -63,7 +65,8 @@ class AppAssignmentTile extends StatelessWidget {
                       app.assignedCategoryName ?? 'Uncategorized',
                       style: TextStyle(fontSize: 14, color: textColor),
                     ),
-                    const Icon(Icons.keyboard_arrow_left, size: 16, color: Colors.black54),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.black54),
                   ],
                 ),
               ),
@@ -74,28 +77,102 @@ class AppAssignmentTile extends StatelessWidget {
     );
   }
 
-  // Helper method to show category selection options
   void _showCategorySelection(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext sheetContext) {
         return Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.symmetric(vertical: 20.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Assign Category:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                child: Text('Assign Category:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
               const SizedBox(height: 10),
-              ...availableCategories.map((category) => ListTile(
-                title: Text(category.name),
+              
+              // 1. "Add New" Option at the top
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFD4AF98), // Brown accent
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.add, color: Colors.white, size: 20),
+                ),
+                title: const Text(
+                  'Create New Category',
+                  style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFD4AF98)),
+                ),
                 onTap: () {
-                  onAssignCategory(category.name);
-                  Navigator.pop(context);
+                  Navigator.pop(sheetContext); // Close sheet
+                  _showAddCategoryDialog(context); // Open dialog
                 },
-              )).toList(),
+              ),
+              const Divider(),
+
+              // 2. Existing Categories
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: availableCategories.length,
+                  itemBuilder: (context, index) {
+                    final category = availableCategories[index];
+                    return ListTile(
+                      title: Text(category.name),
+                      trailing: app.assignedCategoryName == category.name 
+                          ? const Icon(Icons.check, color: Colors.green) 
+                          : null,
+                      onTap: () {
+                        onAssignCategory(category.name);
+                        Navigator.pop(sheetContext);
+                      },
+                    );
+                  },
+                ),
+              ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  // Helper dialog to create a new category directly
+  void _showAddCategoryDialog(BuildContext context) {
+    final textController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('New Category'),
+          content: TextField(
+            controller: textController,
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(hintText: 'Category Name'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+            ElevatedButton(
+              child: const Text('Create'),
+              onPressed: () {
+                if (textController.text.isNotEmpty) {
+                  onAddNewCategory(textController.text);
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+            ),
+          ],
         );
       },
     );
