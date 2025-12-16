@@ -17,8 +17,11 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(AppCategoryEntityAdapter());
   Hive.registerAdapter(InstalledAppAdapter());
+  Hive.registerAdapter(UserSettingsEntityAdapter());
   await Hive.openBox<AppCategoryEntity>('categories');
   await Hive.openBox<InstalledApp>('installed_apps');
+  await Hive.openBox<UserSettingsEntity>('settings');
+  
   di.init(); 
 
   // 2. Initialize Notifications (Foreground)

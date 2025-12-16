@@ -1,10 +1,12 @@
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 
-import '../../features/app_management/domain/entities/app_category_entity.dart';
-import '../../features/app_management/domain/entities/installed_app_entity.dart';
+import '../../features/app_management/domain/entities/entities.dart';
 import '../../features/app_management/domain/repositories/categorization_repository_interface.dart';
 import '../../features/app_management/data/repositories/categorization_repository_impl.dart';
+import '../features/app_management/domain/repositories/settings_repository_interface.dart';
+import '../features/app_management/data/repositories/settings_repository_impl.dart';
+import '../features/app_management/presentation/cubit/settings_cubit.dart';
 import '../../features/app_management/presentation/cubit/categorization_cubit.dart';
 
 import '../../features/app_management/data/datasources/categorization_local_data_source.dart';
@@ -43,6 +45,15 @@ void init() {
   // 3. Cubits
   sl.registerFactory(
     () => CategorizationCubit(sl()),
+  );
+  // Settings Repository
+  sl.registerLazySingleton<SettingsRepository>(
+    () => SettingsRepositoryImpl(Hive.box<UserSettingsEntity>('settings')),
+  );
+
+  // Settings Cubit
+  sl.registerFactory(
+    () => SettingsCubit(sl()),
   );
 
   print("Service Locator initialized successfully.");

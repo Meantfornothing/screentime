@@ -5,11 +5,13 @@ class TimePickerSetting extends StatefulWidget {
   final String title;
   final String description;
   final TimeOfDay initialTime;
+  final ValueChanged<TimeOfDay>? onTimeChanged; 
 
   const TimePickerSetting({
     required this.title,
     required this.description,
     required this.initialTime,
+    this.onTimeChanged, // Add to constructor
     super.key,
   });
 
@@ -24,6 +26,16 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
   void initState() {
     super.initState();
     _selectedTime = widget.initialTime;
+  }
+    // Update internal state if parent passes a new initialTime (e.g. from Cubit)
+  @override
+  void didUpdateWidget(covariant TimePickerSetting oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTime != widget.initialTime) {
+      setState(() {
+        _selectedTime = widget.initialTime;
+      });
+    }
   }
 
   // --- THIS IS THE FUNCTION YOU ASKED ABOUT ---
@@ -51,6 +63,8 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
       setState(() {
         _selectedTime = newTime;
       });
+      // NEW: Notify parent
+      widget.onTimeChanged?.call(newTime);
       // Logic to save the time would go here (e.g. calling a BLoC)
     }
   }
