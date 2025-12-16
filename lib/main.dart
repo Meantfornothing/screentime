@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:workmanager/workmanager.dart'; // Import Workmanager
-import 'core/services/services.dart'; 
+import 'core/services/notification_service.dart'; 
+import 'core/services/background_service.dart';
 import 'core/service_locator.dart' as di; 
 import 'core/routes.dart';
 

@@ -1,31 +1,33 @@
-// FIX: Imports MUST be at the top of the script
+// 1. Imports at the top
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
-// FIX: Define the task configuration before the main android block
-tasks.withType<KotlinCompile>().configureEach {
-    compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-}
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android") 
+    id("org.jetbrains.kotlin.android")
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// 2. Configure Kotlin Tasks
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
 }
 
 android {
     namespace = "com.example.screentime"
     compileSdk = flutter.compileSdkVersion
-    
-    ndkVersion = "27.0.12077973" 
+    ndkVersion = "27.0.12077973" // Ensure this matches your installed NDK
 
     compileOptions {
-        // FIX: Enable Core Library Desugaring
+        // 3. Enable Desugaring for Java 8+ features on older Androids
         isCoreLibraryDesugaringEnabled = true
         
+        // 4. Set Java Compatibility to 17
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    
+
+    // Kotlin options block removed in favor of tasks.withType above to avoid deprecation errors
+
     defaultConfig {
         applicationId = "com.example.screentime"
         minSdk = flutter.minSdkVersion
@@ -33,8 +35,8 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         
-        // Ensure multiDex is enabled if not already (often needed with desugaring)
-        multiDexEnabled = true 
+        // 5. Enable MultiDex
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -44,8 +46,8 @@ android {
     }
 }
 
-// FIX: Add the desugaring dependency with the required version (2.1.4+)
 dependencies {
+    // 6. Use the newer desugaring library version required by flutter_local_notifications
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
 

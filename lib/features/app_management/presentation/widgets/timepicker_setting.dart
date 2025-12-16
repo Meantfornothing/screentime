@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'setting_card.dart'; // We will create this next
+import 'setting_card.dart'; 
 
 class TimePickerSetting extends StatefulWidget {
   final String title;
   final String description;
   final TimeOfDay initialTime;
+  // NEW: Callback to notify parent of changes
   final ValueChanged<TimeOfDay>? onTimeChanged; 
 
   const TimePickerSetting({
@@ -27,7 +28,8 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
     super.initState();
     _selectedTime = widget.initialTime;
   }
-    // Update internal state if parent passes a new initialTime (e.g. from Cubit)
+
+  // Update internal state if parent passes a new initialTime (e.g. from Cubit)
   @override
   void didUpdateWidget(covariant TimePickerSetting oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -38,17 +40,15 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
     }
   }
 
-  // --- THIS IS THE FUNCTION YOU ASKED ABOUT ---
   Future<void> _pickTime() async {
     final TimeOfDay? newTime = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
       builder: (context, child) {
-        // This customizes the clock dial colors to match your design
         return Theme(
           data: ThemeData.light().copyWith(
             colorScheme: ColorScheme.light(
-              primary: const Color(0xFFD4AF98), // Your Brown/Beige color
+              primary: const Color(0xFFD4AF98), 
               onPrimary: Colors.white,
               surface: Colors.white,
               onSurface: Colors.black87,
@@ -65,10 +65,8 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
       });
       // NEW: Notify parent
       widget.onTimeChanged?.call(newTime);
-      // Logic to save the time would go here (e.g. calling a BLoC)
     }
   }
-  // ---------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +97,7 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
                 style: TextStyle(fontSize: 18, color: Colors.black87),
               ),
               GestureDetector(
-                onTap: _pickTime, // Calls the function above
+                onTap: _pickTime, 
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
@@ -138,7 +136,6 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
   Widget _buildAmPmButton(String label, bool isSelected) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0),
-      // Tapping these also triggers the picker for better UX
       child: InkWell(
         onTap: _pickTime, 
         child: Container(
