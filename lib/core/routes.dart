@@ -7,6 +7,7 @@ class AppRoutes {
   static const String dashboard = '/dashboard';
   static const String categorization = '/categorization';
   static const String settings = '/settings';
+  static const String preferences = '/preferences';
 
   // Modal/Initial Screens
   static const String setup = '/setup';

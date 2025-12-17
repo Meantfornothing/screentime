@@ -1,10 +1,9 @@
-import 'dart:math'; // Import for random logic
+import 'dart:math'; 
 import 'package:workmanager/workmanager.dart';
 import 'package:app_usage/app_usage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'notification_service.dart';
 
-// Import Settings Entity
 import '../../features/app_management/domain/entities/user_settings_entity.dart';
 
 const String usageCheckTask = "usageCheckTask";
@@ -20,7 +19,6 @@ void callbackDispatcher() {
 }
 
 Future<void> _checkUsageAndNotify() async {
-  // 1. Initialize dependencies
   await NotificationService.initialize();
   await Hive.initFlutter();
   
@@ -36,13 +34,12 @@ Future<void> _checkUsageAndNotify() async {
     DateTime startDate = endDate.subtract(const Duration(hours: 24));
     List<AppUsageInfo> infoList = await AppUsage().getAppUsage(startDate, endDate);
 
-    // --- LOGIC: Total Daily Goal ---
+    // 1. Check Total Daily Goal
     int totalUsageMinutes = 0;
     for (var info in infoList) {
       totalUsageMinutes += info.usage.inMinutes;
     }
     
-    // Check Daily Goal
     if (totalUsageMinutes >= settings.dailyScreenTimeGoalMinutes) {
        await _sendNudge(
          id: 999,
@@ -50,35 +47,31 @@ Future<void> _checkUsageAndNotify() async {
          body: "You've used ${totalUsageMinutes}m today. Time to disconnect?",
          intensity: settings.nudgeIntensity,
        );
-       return; // Stop here if daily goal hit (priority)
+       // We continue to check individual apps even if daily goal is met, 
+       // to provide specific context.
     }
 
-    // --- LOGIC: Break Reminders (Steered by breakReminderFrequency) ---
-    // breakReminderFrequency is 0.0 (Rare) to 1.0 (Frequent).
-    // Workmanager runs every ~15 mins.
-    // If frequency is high (1.0), we notify almost every check if usage is high.
-    // If frequency is low (0.1), we notify rarely.
-    
-    // Simple probabilistic check based on frequency setting:
-    // If Random() < frequency, we proceed to check app usage.
-    // This makes the notification appearing "randomly" but steered by the setting.
-    final shouldCheckBreak = Random().nextDouble() < settings.breakReminderFrequency;
+    // 2. Check Individual App Thresholds (Nudge Frequency Logic)
+    // Threshold: 2 Hours (120 minutes)
+    const int appUsageThreshold = 120; 
 
-    if (shouldCheckBreak) {
-      // Find the app used most recently/heavily in the last 24h
-      // (Note: Android API doesn't give "current" open app easily in background without permission hurdles,
-      // so we use high usage apps as proxy for "likely using")
-      
+    // Frequency Logic:
+    // Workmanager runs every ~15 mins.
+    // frequency 1.0 => Notify every time (15 mins)
+    // frequency 0.5 => Notify ~50% of the time (30 mins)
+    // frequency 0.1 => Notify ~10% of the time (2.5 hours)
+    final shouldNudge = Random().nextDouble() < settings.breakReminderFrequency;
+
+    if (shouldNudge) {
       for (var info in infoList) {
-        // If an individual app has high usage (e.g. > 30 mins)
-        if (info.usage.inMinutes > 30) {
+        if (info.usage.inMinutes >= appUsageThreshold) {
            await _sendNudge(
              id: info.packageName.hashCode,
-             title: "Break Time?",
-             body: "You've been on ${info.appName} for a while (${info.usage.inMinutes}m).",
+             title: "High Usage Alert",
+             body: "You've been using ${info.appName} for ${info.usage.inMinutes}m today.",
              intensity: settings.nudgeIntensity,
            );
-           break; // Notify for just one app to avoid spam
+           break; // Notify for the most egregious app only to avoid spam
         }
       }
     }
@@ -90,7 +83,6 @@ Future<void> _checkUsageAndNotify() async {
   }
 }
 
-// Helper to format notification based on Intensity
 Future<void> _sendNudge({
   required int id,
   required String title,
@@ -100,18 +92,15 @@ Future<void> _sendNudge({
   String finalTitle = title;
   String finalBody = body;
 
-  // Steering behavior based on Nudge Intensity (0.0 - 1.0)
   if (intensity > 0.8) {
-    // Aggressive
     finalTitle = "STOP SCROLLING!";
-    finalBody = body.toUpperCase() + " PUT THE PHONE DOWN NOW.";
+    finalBody = body.toUpperCase() + " PUT THE PHONE DOWN.";
   } else if (intensity < 0.3) {
-    // Gentle
     finalTitle = "Gentle Nudge";
-    finalBody = "Hey there, $body Maybe stretch a bit?";
+    finalBody = "Hey, $body maybe take a breath?";
   }
   
-  print("Sending Notification: $finalTitle - $finalBody"); // Log for debugging
+  print("Sending Notification: $finalTitle"); 
 
   await NotificationService.showNotification(
     id: id,

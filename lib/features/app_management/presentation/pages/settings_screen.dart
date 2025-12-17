@@ -49,7 +49,7 @@ class _SettingsView extends StatelessWidget {
                     padding: const EdgeInsets.all(24.0),
                     children: [
                       const Text(
-                        'Nudges',
+                        'Nudge Settings', // Changed from 'Nudges'
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -58,12 +58,12 @@ class _SettingsView extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       
-                      // 1. Length of Break Reminder
+                      // 1. Length of Break Reminder (Which you want to act as frequency)
                       SliderSetting(
-                        title: 'Length of Break Reminder',
-                        description: 'How long before the app nudges you?',
-                        minLabel: 'Short',
-                        maxLabel: 'Long',
+                        title: 'Nudge Frequency', // Updated label as well
+                        description: 'How often should we remind you?',
+                        minLabel: 'Rarely',
+                        maxLabel: 'Often',
                         // Bind to state
                         initialValue: settings.breakReminderFrequency, 
                         onChanged: (value) {
@@ -112,10 +112,9 @@ class _SettingsView extends StatelessWidget {
                           hour: settings.bedtimeHour, 
                           minute: settings.bedtimeMinute
                         ),
-                        // Note: You might need to update TimePickerSetting to accept an onChanged callback
-                        // For now, we assume it's read-only or handled internally, 
-                        // but ideally we pass a callback like:
-                        // onTimeChanged: (time) => context.read<SettingsCubit>().updateBedtime(time.hour, time.minute),
+                        onTimeChanged: (newTime) {
+                          context.read<SettingsCubit>().updateBedtime(newTime.hour, newTime.minute);
+                        },
                       ),
                       const SizedBox(height: 30),
                     ],

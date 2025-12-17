@@ -13,14 +13,21 @@ class SettingsCubit extends Cubit<SettingsState> {
       final settings = await repository.getSettings();
       emit(state.copyWith(status: SettingsStatus.success, settings: settings));
     } catch (e) {
+      print('SettingsCubit Error: Failed to load settings: $e');
       emit(state.copyWith(status: SettingsStatus.failure));
     }
+  }
+
+  // FIX: Added missing updateUserGoal method
+  Future<void> updateUserGoal(String goal) async {
+    final newSettings = state.settings.copyWith(userGoal: goal);
+    emit(state.copyWith(settings: newSettings));
+    await saveSettings();
   }
 
   Future<void> updateBreakFrequency(double value) async {
     final newSettings = state.settings.copyWith(breakReminderFrequency: value);
     emit(state.copyWith(settings: newSettings));
-    // Auto-save logic (or save on button press)
   }
 
   Future<void> updateDailyGoal(int minutes) async {
@@ -41,8 +48,9 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> saveSettings() async {
     try {
       await repository.saveSettings(state.settings);
+      print('HIVE SUCCESS: Settings saved successfully!');
     } catch (e) {
-      // Handle error
+      print('HIVE ERROR: Failed to save settings: $e');
     }
   }
 }
