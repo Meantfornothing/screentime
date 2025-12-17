@@ -2,18 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/service_locator.dart';
 
+// Import Cubit and State
 import '../cubit/categorization_cubit.dart';
 import '../cubit/categorization_state.dart';
 
-// --- Imports ---
-import '../../domain/entities/app_category_entity.dart';
-import '../widgets/app_assignment_tile.dart';
+// Import Widgets
+import '../widgets/widgets.dart'; // Barrel import for AppAssignmentTile, etc.
 
 class CategorizationScreen extends StatelessWidget {
   const CategorizationScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // FIX: Providing the Cubit here ensures that when you navigate via 
+    // Navigator.pushNamed from Preferences, the Cubit is available in the context.
     return BlocProvider(
       create: (context) => sl<CategorizationCubit>()..loadData(),
       child: const _CategorizationView(),
@@ -26,145 +28,85 @@ class _CategorizationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<CategorizationCubit, CategorizationState>(
-      builder: (context, state) {
-        
-        if (state.status == CategorizationStatus.loading) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(color: Color(0xFFD4AF98)),
-            ),
-          );
-        }
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Categorization'),
+        backgroundColor: const Color(0xFFD4AF98),
+        foregroundColor: Colors.white,
+      ),
+      body: BlocBuilder<CategorizationCubit, CategorizationState>(
+        builder: (context, state) {
+          if (state.status == CategorizationStatus.loading) {
+            return const Center(child: CircularProgressIndicator(color: Color(0xFFD4AF98)));
+          }
 
-        if (state.status == CategorizationStatus.failure) {
-          return Scaffold(
-            body: Center(
-              child: Text('Error: ${state.errorMessage}'),
-            ),
-          );
-        }
+          if (state.status == CategorizationStatus.failure) {
+            return Center(child: Text('Error: ${state.errorMessage}'));
+          }
 
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 24),
-                const Text(
-                  'App Categorization',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Assign categories to get better recommendations.',
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
-                ),
-                const SizedBox(height: 24),
-                
-                // Search & Filter (Sticky Header concept)
-                _buildApplicationSearchAndFilter(),
-                const SizedBox(height: 16),
-
-                // Quick Category Filter (Horizontal Scroll)
-                _buildAppListHeader(state.categories),
-                const SizedBox(height: 12),
-
-                // App List
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: state.apps.length,
-                    itemBuilder: (context, index) {
-                      final app = state.apps[index];
-                      return AppAssignmentTile(
-                        app: app,
-                        availableCategories: state.categories,
-                        onAssignCategory: (category) {
-                          context.read<CategorizationCubit>().assignCategory(app.packageName, category);
-                        },
-                        // Callback to add new category directly from the tile
-                        onAddNewCategory: (newCategoryName) {
-                          context.read<CategorizationCubit>().addCategory(newCategoryName);
-                          // Optionally auto-assign after creating:
-                          context.read<CategorizationCubit>().assignCategory(app.packageName, newCategoryName);
-                          
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Created category: $newCategoryName')),
-                          );
-                        },
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: state.apps.length,
+            itemBuilder: (context, index) {
+              final app = state.apps[index];
+              return AppAssignmentTile(
+                app: app,
+                // FIX: Updated parameter names to match the AppAssignmentTile constructor
+                availableCategories: state.categories,
+                onAssignCategory: (categoryName) {
+                  context.read<CategorizationCubit>().assignCategory(
+                        app.packageName,
+                        categoryName,
                       );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildApplicationSearchAndFilter() {
-    return Column(
-      children: [
-        TextFormField(
-          decoration: InputDecoration(
-            hintText: 'Search installed apps...',
-            prefixIcon: const Icon(Icons.search, color: Colors.black54),
-            filled: true,
-            fillColor: Colors.grey.shade100,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 15),
-          ),
-          onChanged: (query) {
-            // Future feature: context.read<CategorizationCubit>().filterApps(query);
-          },
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('All Installed Apps', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            Row(
-              children: [
-                TextButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.sort, size: 16, color: Colors.black54),
-                  label: const Text('Sort', style: TextStyle(color: Colors.black54)),
-                ),
-                TextButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.filter_list, size: 16, color: Colors.black54),
-                  label: const Text('Filter', style: TextStyle(color: Colors.black54)),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAppListHeader(List<AppCategoryEntity> categories) {
-    return Container(
-      height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: categories.length,
-        separatorBuilder: (c, i) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          return Chip(
-            label: Text(categories[index].name),
-            backgroundColor: Colors.grey.shade100,
-            labelStyle: const TextStyle(fontSize: 12, color: Colors.black87),
-            padding: EdgeInsets.zero,
-            visualDensity: VisualDensity.compact,
+                },
+                onAddNewCategory: (newCategoryName) {
+                  context.read<CategorizationCubit>().addCategory(newCategoryName);
+                  // Optionally assign it immediately
+                  context.read<CategorizationCubit>().assignCategory(
+                        app.packageName,
+                        newCategoryName,
+                      );
+                },
+              );
+            },
           );
         },
+      ),
+      // Button to add new categories manually
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddCategoryDialog(context),
+        backgroundColor: const Color(0xFFD4AF98),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _showAddCategoryDialog(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (innerContext) => AlertDialog(
+        title: const Text('Add Category'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Category Name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(innerContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                // We use the 'context' from the outer view which contains the Cubit
+                context.read<CategorizationCubit>().addCategory(controller.text);
+                Navigator.pop(innerContext);
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
       ),
     );
   }
