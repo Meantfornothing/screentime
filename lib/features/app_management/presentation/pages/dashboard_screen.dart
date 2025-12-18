@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/service_locator.dart';
 import '../../../../core/services/notification_service.dart';
-import '../../../../core/routes.dart'; // Import routes for navigation
+import '../../../../core/routes.dart';
 
 // Import Cubit and State
 import '../cubit/dashboard_cubit.dart';
@@ -39,30 +39,20 @@ class _DashboardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        backgroundColor: const Color(0xFFD4AF98),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // Navigate to the new Preferences screen
-              Navigator.pushNamed(context, AppRoutes.preferences);
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await NotificationService.showNotification(
-            id: 999,
-            title: 'Test Notification',
-            body: 'This is a forced notification test.',
-          );
-        },
-        backgroundColor: const Color(0xFFD4AF98),
-        child: const Icon(Icons.notifications_active),
+      // 1. & 3. Removed AppBar and updated the button to be a centered, highly visible Extended FAB
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.pushNamed(context, AppRoutes.preferences);
+          },
+          label: const Text('Preferences', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          icon: const Icon(Icons.settings),
+          backgroundColor: const Color(0xFFD4AF98),
+          foregroundColor: Colors.white,
+          elevation: 6,
+        ),
       ),
       body: SafeArea(
         child: BlocBuilder<DashboardCubit, DashboardState>(
@@ -77,18 +67,20 @@ class _DashboardView extends StatelessWidget {
             }
 
             return ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+              // Increased bottom padding to prevent FAB from overlapping content
+              padding: const EdgeInsets.fromLTRB(20.0, 32.0, 20.0, 120.0), 
               children: [
+                // Header Replacement
                 Text(
                   'Hi ${state.userName}!',
-                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+                  style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: Colors.black),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Total Screen Time: ${state.totalScreenTime.inHours}h ${state.totalScreenTime.inMinutes % 60}m',
                   style: const TextStyle(fontSize: 16, color: Colors.black54),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
 
                 const AspectRatio(
                   aspectRatio: 16 / 9,
@@ -117,7 +109,17 @@ class _DashboardView extends StatelessWidget {
                   recommendedApps: state.recommendedApps,
                   getCategoryColor: getCategoryColor, 
                 ),
-                const SizedBox(height: 30), 
+                const SizedBox(height: 30),
+
+                // Manual test link at bottom
+                TextButton.icon(
+                  onPressed: () => NotificationService.showNotification(
+                    id: 999, title: 'System Check', body: 'Notifications are active!'
+                  ),
+                  icon: const Icon(Icons.notifications_active, size: 14),
+                  label: const Text('Test Notification System', style: TextStyle(fontSize: 12)),
+                  style: TextButton.styleFrom(foregroundColor: Colors.grey.shade400),
+                ),
               ],
             );
           },
@@ -135,8 +137,8 @@ class _DashboardView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 8,
-            height: 8,
+            width: 10,
+            height: 10,
             decoration: BoxDecoration(
               color: getCategoryColor(category),
               shape: BoxShape.circle,

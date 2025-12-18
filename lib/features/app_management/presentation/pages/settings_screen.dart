@@ -7,14 +7,13 @@ import '../cubit/settings_cubit.dart';
 import '../cubit/settings_state.dart';
 
 // Import Widgets
-import '../widgets/widgets.dart'; // Barrel import
+import '../widgets/widgets.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 1. Provide the SettingsCubit
     return BlocProvider(
       create: (context) => sl<SettingsCubit>()..loadSettings(),
       child: const _SettingsView(),
@@ -27,7 +26,6 @@ class _SettingsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 2. Listen to state changes
     return BlocBuilder<SettingsCubit, SettingsState>(
       builder: (context, state) {
         
@@ -37,7 +35,6 @@ class _SettingsView extends StatelessWidget {
           );
         }
 
-        // 3. Extract settings for easier access
         final settings = state.settings;
 
         return Scaffold(
@@ -48,50 +45,53 @@ class _SettingsView extends StatelessWidget {
                   child: ListView(
                     padding: const EdgeInsets.all(24.0),
                     children: [
-                      const Text(
-                        'Nudge Settings', // Changed from 'Nudges'
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
+                      // 2. Added a manual back button and header area
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Nudge Settings',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
                       
-                      // 1. Length of Break Reminder (Which you want to act as frequency)
                       SliderSetting(
-                        title: 'Nudge Frequency', // Updated label as well
+                        title: 'Nudge Frequency', 
                         description: 'How often should we remind you?',
                         minLabel: 'Rarely',
                         maxLabel: 'Often',
-                        // Bind to state
                         initialValue: settings.breakReminderFrequency, 
                         onChanged: (value) {
-                          // Call Cubit
                           context.read<SettingsCubit>().updateBreakFrequency(value);
                         },
                       ),
                       const SizedBox(height: 20),
 
-                      // 2. Daily Screen Time Goal
                       SliderSetting(
                         title: 'Daily Screen Time Goal',
                         description: 'Set your ideal daily usage target.',
                         minLabel: '0h',
                         maxLabel: '10h',
-                        // Convert minutes (0-600) to slider value (0.0-1.0)
                         initialValue: settings.dailyScreenTimeGoalMinutes / 600.0, 
                         divisions: 10,
                         labelMapper: (value) => '${(value * 10).round()}h',
                         onChanged: (value) {
-                          // Convert slider (0.0-1.0) back to minutes (0-600)
                           final minutes = (value * 600).round();
                           context.read<SettingsCubit>().updateDailyGoal(minutes);
                         },
                       ),
                       const SizedBox(height: 20),
 
-                      // 3. Nudge Intensity
                       SliderSetting(
                         title: 'Nudge Intensity',
                         description: 'Soft = subtle suggestions, Firm = strong reminders.',
@@ -104,7 +104,6 @@ class _SettingsView extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      // 4. Bedtime Reminder
                       TimePickerSetting(
                         title: 'Bedtime Reminder',
                         description: 'Receive frequent reminders when it\'s getting late.',
@@ -116,19 +115,19 @@ class _SettingsView extends StatelessWidget {
                           context.read<SettingsCubit>().updateBedtime(newTime.hour, newTime.minute);
                         },
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
                 
-                // Save Button
+                // Fixed Save Button at the bottom
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withOpacity(0.05),
                         blurRadius: 10,
                         offset: const Offset(0, -5),
                       ),
@@ -136,22 +135,25 @@ class _SettingsView extends StatelessWidget {
                   ),
                   child: ElevatedButton(
                     onPressed: () {
-                      // Trigger save
                       context.read<SettingsCubit>().saveSettings();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Settings saved!')),
+                        const SnackBar(
+                          content: Text('Settings saved successfully!'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFD4AF98),
-                      minimumSize: const Size(double.infinity, 50),
+                      minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
+                      elevation: 2,
                     ),
                     child: const Text(
-                      'Save',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                      'Save Changes',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
                 ),
