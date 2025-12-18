@@ -1,6 +1,6 @@
 import '../../domain/repositories/categorization_repository_interface.dart';
 import '../../domain/entities/app_category_entity.dart';
-import '../../domain/entities/installed_app_entity.dart'; // Uses InstalledApp class
+import '../../domain/entities/installed_app_entity.dart';
 import '../datasources/categorization_local_data_source.dart';
 import '../datasources/installed_apps_data_source.dart';
 import '../datasources/app_usage_local_data_source.dart';
@@ -8,7 +8,7 @@ import '../datasources/app_usage_local_data_source.dart';
 class CategorizationRepositoryImpl implements CategorizationRepository {
   final CategorizationLocalDataSource localDataSource;
   final InstalledAppsDataSource installedAppsDataSource;
-  final AppUsageDataSource appUsageDataSource; // New Dependency
+  final AppUsageDataSource appUsageDataSource;
 
   CategorizationRepositoryImpl({
     required this.localDataSource,
@@ -17,28 +17,24 @@ class CategorizationRepositoryImpl implements CategorizationRepository {
   });
 
   @override
-  Future<List<AppCategoryEntity>> getCategories() async {
-    return localDataSource.getCategories();
-  }
-
-  @override
-  Future<List<InstalledApp>> getInstalledApps() async {
-    // 1. Get base apps (from cache or OS)
+  Future<List<InstalledApp>> getInstalledApps({bool forceRefresh = false}) async {
+    // 1. Check local cache first
     List<InstalledApp> apps = await localDataSource.getCachedInstalledApps();
     
-    if (apps.isEmpty) {
+    // 2. If force refresh is requested OR cache is empty, fetch from the OS
+    if (forceRefresh || apps.isEmpty) {
       try {
         final osApps = await installedAppsDataSource.getInstalledAppsFromOS();
         await localDataSource.cacheInstalledApps(osApps);
         apps = osApps;
       } catch (e) {
-        return [];
+        // Fallback to cache if OS fetch fails, or return empty if both fail
+        if (apps.isEmpty) return [];
       }
     }
 
-    // 2. Fetch & Merge Usage Data (Silent update)
+    // 3. Merge live usage data (not cached in the app box to keep it fresh)
     final usageMap = await appUsageDataSource.getDailyUsage();
-    
     return apps.map((app) {
       final usage = usageMap[app.packageName] ?? Duration.zero;
       return app.copyWith(usageDuration: usage);
@@ -46,12 +42,14 @@ class CategorizationRepositoryImpl implements CategorizationRepository {
   }
 
   @override
-  Future<void> addCategory(String name) async {
-    final newCategory = AppCategoryEntity(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name
-    );
-    await localDataSource.addCategory(newCategory);
+  Future<List<AppCategoryEntity>> getCategories() async {
+    return localDataSource.getCategories();
+  }
+
+  @override
+  Future<void> addCategory(AppCategoryEntity category) async {
+    // This now matches the updated interface signature
+    await localDataSource.addCategory(category);
   }
 
   @override
