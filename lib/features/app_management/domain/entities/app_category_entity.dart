@@ -1,18 +1,35 @@
+import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
 
-// 1. Annotate the class (Optional if manual, but good practice)
-@HiveType(typeId: 0)
-class AppCategoryEntity extends HiveObject {
+@HiveType(typeId: 0) // typeId 0 is unique to this entity
+class AppCategoryEntity extends HiveObject with EquatableMixin {
   @HiveField(0)
   final String id;
-
+  
   @HiveField(1)
   final String name;
 
-  AppCategoryEntity({required this.id, required this.name});
+  AppCategoryEntity({
+    required this.id,
+    required this.name,
+  });
+
+  /// Allows creating a new instance with some updated fields.
+  AppCategoryEntity copyWith({
+    String? id,
+    String? name,
+  }) {
+    return AppCategoryEntity(
+      id: id ?? this.id,
+      name: name ?? this.name,
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, name];
 }
 
-// 2. Manual TypeAdapter Implementation
+/// Manual Hive Adapter to match the pattern in your other entities.
 class AppCategoryEntityAdapter extends TypeAdapter<AppCategoryEntity> {
   @override
   final int typeId = 0;
