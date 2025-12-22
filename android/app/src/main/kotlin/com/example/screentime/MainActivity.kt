@@ -1,7 +1,6 @@
 package com.example.screentime
 
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
+import android.content.Intent
 import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -27,30 +26,36 @@ class MainActivity: FlutterActivity() {
         val appsList = mutableListOf<Map<String, String>>()
         val packageManager = context.packageManager
         
-        // Get all installed packages
-        val packages = packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
+        // Create an intent that targets the "Main" action for "Launcher" apps
+        // This effectively asks Android: "Give me everything in the App Drawer"
+        val intent = Intent(Intent.ACTION_MAIN, null)
+        intent.addCategory(Intent.CATEGORY_LAUNCHER)
 
-        for (packageInfo in packages) {
-            // Safely access applicationInfo using ?
-            val appInfo = packageInfo.applicationInfo
+        // Query for all activities that match this intent
+        val apps = packageManager.queryIntentActivities(intent, 0)
+
+        for (resolveInfo in apps) {
+            val activityInfo = resolveInfo.activityInfo
             
-            // Explicit null check
-            if (appInfo != null) {
-                // Use safe call ?. just in case, though it should be non-null here
-                val label = appInfo.loadLabel(packageManager)
-                val appName = label?.toString() ?: "Unknown App"
-                val packageName = packageInfo.packageName
-                
-                // Ensure package name is not null (though unlikely)
-                if (packageName != null && packageManager.getLaunchIntentForPackage(packageName) != null) {
-                    val appMap = mapOf(
-                        "appName" to appName,
-                        "packageName" to packageName
-                    )
-                    appsList.add(appMap)
-                }
+            // Get the app name and package name
+            val appName = resolveInfo.loadLabel(packageManager).toString()
+            val packageName = activityInfo.packageName
+
+            // Avoid duplicates (sometimes an app has multiple launcher icons)
+            val alreadyExists = appsList.any { it["packageName"] == packageName }
+            
+            if (!alreadyExists) {
+                val appMap = mapOf(
+                    "appName" to appName,
+                    "packageName" to packageName
+                )
+                appsList.add(appMap)
             }
         }
+        
+        // Optional: Sort alphabetically for a nicer initial list
+        appsList.sortBy { it["appName"] }
+        
         return appsList
     }
 }

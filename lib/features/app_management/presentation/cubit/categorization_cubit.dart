@@ -9,12 +9,11 @@ class CategorizationCubit extends Cubit<CategorizationState> {
 
   CategorizationCubit(this.repository) : super(const CategorizationState());
 
-  /// Loads apps and categories from the repository. 
-  /// Set [forceRefresh] to true to bypass the Hive cache and scan the Android OS again.
+  /// Loads apps and categories. 
+  /// Set [forceRefresh] to true to bypass cache and scan the OS again.
   Future<void> loadData({bool forceRefresh = false}) async {
     emit(state.copyWith(status: CategorizationStatus.loading));
     try {
-      // Fetch both apps and categories in parallel
       final results = await Future.wait([
         repository.getInstalledApps(forceRefresh: forceRefresh),
         repository.getCategories(),
@@ -33,44 +32,35 @@ class CategorizationCubit extends Cubit<CategorizationState> {
     }
   }
 
-  /// Adds a new category.
   Future<void> addCategory(String name) async {
     try {
       final newCategory = AppCategoryEntity(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: name,
       );
-      
-      // The repository interface now correctly accepts the entity object
+      // FIX: Ensure this line passes the entity, not just the name string
+      // The error you saw happens if this was 'repository.addCategory(name)'
       await repository.addCategory(newCategory);
       
-      // Refresh local categories state
-      final updatedCategories = await repository.getCategories();
-      emit(state.copyWith(categories: updatedCategories));
+      await loadData(forceRefresh: false);
     } catch (e) {
       emit(state.copyWith(errorMessage: 'Failed to add category'));
     }
   }
 
-  /// Deletes an existing category.
   Future<void> deleteCategory(String id) async {
     try {
       await repository.deleteCategory(id);
-      
-      // Refresh local categories state
-      final updatedCategories = await repository.getCategories();
-      emit(state.copyWith(categories: updatedCategories));
+      await loadData(forceRefresh: false);
     } catch (e) {
       emit(state.copyWith(errorMessage: 'Failed to delete category'));
     }
   }
 
-  /// Assigns a specific app to a category.
   Future<void> assignCategory(String packageName, String categoryName) async {
     try {
       await repository.assignCategory(packageName, categoryName);
       
-      // Optimization: Update the local list immediately for instant UI feedback
       final updatedApps = state.apps.map((app) {
         if (app.packageName == packageName) {
           return app.copyWith(assignedCategoryName: categoryName);

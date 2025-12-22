@@ -1,12 +1,16 @@
+import '../entities/installed_app_entity.dart';
 import '../entities/app_category_entity.dart';
-import '../entities/installed_app_entity.dart'; // FIX: Import renamed file
 
 abstract class CategorizationRepository {
-  // FIX: Return type must be InstalledAppEntity
-  Future<List<InstalledApp>> getInstalledApps();
-  
+  // Added forceRefresh parameter
+  Future<List<InstalledApp>> getInstalledApps({bool forceRefresh = false});
+
   Future<List<AppCategoryEntity>> getCategories();
-  Future<void> addCategory(String name);
+
+  // Changed parameter type from String to AppCategoryEntity
+  Future<void> addCategory(AppCategoryEntity category);
+
   Future<void> deleteCategory(String id);
+
   Future<void> assignCategory(String packageName, String categoryName);
 }

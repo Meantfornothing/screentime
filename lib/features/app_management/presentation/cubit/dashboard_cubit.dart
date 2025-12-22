@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/categorization_repository_interface.dart';
-import 'dashboard_state.dart';
 import '../../domain/entities/installed_app_entity.dart';
+import 'dashboard_state.dart';
 
 class DashboardCubit extends Cubit<DashboardState> {
   final CategorizationRepository repository;
@@ -12,7 +12,7 @@ class DashboardCubit extends Cubit<DashboardState> {
     emit(state.copyWith(status: DashboardStatus.loading));
     
     try {
-      // 1. Fetch apps with real usage data
+      // 1. Fetch apps (Repo automatically fetches Usage stats and merges them!)
       final apps = await repository.getInstalledApps();
 
       // 2. Calculate Total Usage
@@ -39,42 +39,32 @@ class DashboardCubit extends Cubit<DashboardState> {
 
       // 4. Generate Insights
       String insight = "You've used your phone for ${totalUsage.inMinutes}m today.";
-      if (topCategory != 'None') {
-        insight += " Most time spent in $topCategory.";
+      if (topCategory != 'None' && topDuration.inMinutes > 0) {
+        insight += " Most time spent in $topCategory (${topDuration.inMinutes}m).";
+      } else if (totalUsage.inMinutes == 0) {
+        insight = "No usage data yet. Grant permissions or use your phone!";
       }
 
-      // 5. Generate Recommendations (Simple Logic)
-      // Example: Recommend apps from a different category than the top one
-      // Or just show apps with low usage (Productivity?)
-      
-      List<InstalledApp> recommendations = [];
-      if (topCategory == 'Entertainment') {
-        // Recommend Productivity apps
-        recommendations = apps.where((app) => app.assignedCategoryName == 'Productivity').take(4).toList();
-      } else {
-        // Recommend Entertainment apps (mock logic for balance)
-        recommendations = apps.where((app) => app.assignedCategoryName == 'Entertainment').take(4).toList();
-      }
-      
-      // Fallback if empty
-      if (recommendations.isEmpty) {
-        recommendations = apps.take(4).toList();
-      }
+      // 5. Recommendations: Show "Top Used Apps"
+      final sortedApps = List<InstalledApp>.from(apps);
+      sortedApps.sort((a, b) => b.usageDuration.compareTo(a.usageDuration));
+      final topApps = sortedApps.take(4).toList();
 
       emit(state.copyWith(
         status: DashboardStatus.success,
-        userName: 'Olivia', // Could be fetched from UserSettings later
+        userName: 'User', 
         totalScreenTime: totalUsage,
         mostUsedCategory: topCategory,
-        recommendedApps: recommendations,
+        recommendedApps: topApps,
         insightMessage: insight,
-        recommendationMessage: recommendations.isNotEmpty 
-            ? "Try balancing your time with these:" 
-            : "Categorize more apps to get recommendations!",
+        recommendationMessage: "Your most used apps today:",
       ));
 
     } catch (e) {
-      emit(state.copyWith(status: DashboardStatus.failure));
+      emit(state.copyWith(
+        status: DashboardStatus.failure,
+        insightMessage: "Error loading data: $e"
+      ));
     }
   }
 }
