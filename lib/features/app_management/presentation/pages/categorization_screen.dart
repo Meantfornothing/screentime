@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/service_locator.dart';
 
-// Import Cubit and State
+// Ensure these imports are correct and the files exist
 import '../cubit/categorization_cubit.dart';
 import '../cubit/categorization_state.dart';
-
-// Import Widgets
 import '../widgets/widgets.dart';
 
 class CategorizationScreen extends StatelessWidget {
@@ -15,6 +13,7 @@ class CategorizationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
+      // sl<CategorizationCubit>() must be registered in your service_locator.dart
       create: (context) => sl<CategorizationCubit>()..loadData(),
       child: const _CategorizationView(),
     );
@@ -31,7 +30,7 @@ class _CategorizationView extends StatefulWidget {
 class _CategorizationViewState extends State<_CategorizationView> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
-  String? _selectedCategoryFilter; // null = All, "Uncategorized" = Uncategorized, else specific category
+  String? _selectedCategoryFilter;
 
   @override
   void dispose() {
@@ -53,12 +52,8 @@ class _CategorizationViewState extends State<_CategorizationView> {
               return Center(child: Text('Error: ${state.errorMessage}'));
             }
 
-            // --- SEARCH & FILTER LOGIC ---
             final filteredApps = state.apps.where((app) {
-              // 1. Search Query filter
               final matchesSearch = app.name.toLowerCase().contains(_searchQuery.toLowerCase());
-              
-              // 2. Category Filter
               bool matchesCategory = true;
               if (_selectedCategoryFilter != null) {
                 if (_selectedCategoryFilter == "Uncategorized") {
@@ -67,45 +62,26 @@ class _CategorizationViewState extends State<_CategorizationView> {
                   matchesCategory = app.assignedCategoryName == _selectedCategoryFilter;
                 }
               }
-
               return matchesSearch && matchesCategory;
             }).toList();
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Custom Header Area
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                   child: Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                        onPressed: () => Navigator.pop(context),
-                      ),
+                      IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
                       const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'Categorization',
-                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
-                        ),
-                      ),
-                      // NEW: Refresh button to clear cache and re-fetch from OS
+                      const Expanded(child: Text('Categorization', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold))),
                       IconButton(
                         icon: const Icon(Icons.refresh, color: Color(0xFFD4AF98)),
-                        tooltip: 'Refresh App List',
-                        onPressed: () {
-                          context.read<CategorizationCubit>().loadData(forceRefresh: true);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Refreshing app list...'), duration: Duration(seconds: 1)),
-                          );
-                        },
+                        onPressed: () => context.read<CategorizationCubit>().loadData(forceRefresh: true),
                       ),
                     ],
                   ),
                 ),
-
-                // Search Bar
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
                   child: TextField(
@@ -116,33 +92,14 @@ class _CategorizationViewState extends State<_CategorizationView> {
                       prefixIcon: const Icon(Icons.search, color: Color(0xFFD4AF98)),
                       filled: true,
                       fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                      suffixIcon: _searchQuery.isNotEmpty 
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = "");
-                            },
-                          )
-                        : null,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                     ),
                   ),
                 ),
-
-                // Filter Row
                 _buildFilterRow(state.categories),
-
-                const SizedBox(height: 8),
-
-                // App List
                 Expanded(
                   child: filteredApps.isEmpty 
-                    ? _buildEmptyState()
+                    ? const Center(child: Text('No apps found'))
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         itemCount: filteredApps.length,
@@ -151,18 +108,10 @@ class _CategorizationViewState extends State<_CategorizationView> {
                           return AppAssignmentTile(
                             app: app,
                             availableCategories: state.categories,
-                            onAssignCategory: (categoryName) {
-                              context.read<CategorizationCubit>().assignCategory(
-                                    app.packageName,
-                                    categoryName,
-                                  );
-                            },
-                            onAddNewCategory: (newCategoryName) {
-                              context.read<CategorizationCubit>().addCategory(newCategoryName);
-                              context.read<CategorizationCubit>().assignCategory(
-                                    app.packageName,
-                                    newCategoryName,
-                                  );
+                            onAssignCategory: (name) => context.read<CategorizationCubit>().assignCategory(app.packageName, name),
+                            onAddNewCategory: (name) {
+                              context.read<CategorizationCubit>().addCategory(name);
+                              context.read<CategorizationCubit>().assignCategory(app.packageName, name);
                             },
                           );
                         },
@@ -189,21 +138,14 @@ class _CategorizationViewState extends State<_CategorizationView> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         children: [
-          // "All" Filter
           _buildFilterChip('All', null),
           const SizedBox(width: 8),
-          
-          // "Uncategorized" Filter
           _buildFilterChip('Uncategorized', 'Uncategorized'),
           const SizedBox(width: 8),
-
-          // Individual Category Filters
-          ...dynamicCategories.map((cat) {
-            return Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: _buildFilterChip(cat.name, cat.name),
-            );
-          }).toList(),
+          ...dynamicCategories.map((cat) => Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: _buildFilterChip(cat.name, cat.name),
+          )),
         ],
       ),
     );
@@ -214,35 +156,11 @@ class _CategorizationViewState extends State<_CategorizationView> {
     return FilterChip(
       label: Text(label),
       selected: isSelected,
-      onSelected: (_) {
-        setState(() {
-          _selectedCategoryFilter = value;
-        });
-      },
+      onSelected: (_) => setState(() => _selectedCategoryFilter = value),
       selectedColor: const Color(0xFFD4AF98).withOpacity(0.3),
       checkmarkColor: const Color(0xFFD4AF98),
       backgroundColor: Colors.grey.shade100,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      labelStyle: TextStyle(
-        color: isSelected ? const Color(0xFFD4AF98) : Colors.black54,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.search_off, size: 64, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(
-            'No apps found matching "$_searchQuery"',
-            style: const TextStyle(color: Colors.black38),
-          ),
-        ],
-      ),
     );
   }
 
@@ -252,16 +170,9 @@ class _CategorizationViewState extends State<_CategorizationView> {
       context: context,
       builder: (innerContext) => AlertDialog(
         title: const Text('Add Category'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: 'Category Name'),
-          autofocus: true,
-        ),
+        content: TextField(controller: controller, decoration: const InputDecoration(hintText: 'Category Name'), autofocus: true),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(innerContext),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(innerContext), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
               if (controller.text.isNotEmpty) {

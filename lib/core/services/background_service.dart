@@ -2,11 +2,19 @@ import 'dart:math';
 import 'package:workmanager/workmanager.dart';
 import 'package:app_usage/app_usage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'notification_service.dart';
 
 import '../../features/app_management/domain/entities/user_settings_entity.dart';
+import '../../features/app_management/domain/entities/installed_app_entity.dart';
 
 const String usageCheckTask = "usageCheckTask";
+
+// UPDATED: This function handles taps when the app is closed
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse notificationResponse) {
+  print("Background Tap Payload: ${notificationResponse.payload}");
+}
 
 @pragma('vm:entry-point') 
 void callbackDispatcher() {
@@ -19,14 +27,17 @@ void callbackDispatcher() {
 }
 
 Future<void> _checkUsageAndNotify() async {
-  await NotificationService.initialize();
-  await Hive.initFlutter();
+  // Pass the background callback here too
+  await NotificationService.initialize(
+    onBackgroundNotificationResponse: notificationTapBackground,
+  );
   
-  if (!Hive.isAdapterRegistered(2)) {
-    Hive.registerAdapter(UserSettingsEntityAdapter());
-  }
+  await Hive.initFlutter();
+  if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(UserSettingsEntityAdapter());
+  if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(InstalledAppAdapter());
 
   final settingsBox = await Hive.openBox<UserSettingsEntity>('settings');
+  final installedAppsBox = await Hive.openBox<InstalledApp>('installed_apps');
   final settings = settingsBox.get('user_settings') ?? UserSettingsEntity();
 
   try {
@@ -34,52 +45,42 @@ Future<void> _checkUsageAndNotify() async {
     DateTime startDate = endDate.subtract(const Duration(hours: 24));
     List<AppUsageInfo> infoList = await AppUsage().getAppUsage(startDate, endDate);
 
-    // 1. Check Total Daily Goal
-    int totalUsageMinutes = 0;
-    for (var info in infoList) {
-      totalUsageMinutes += info.usage.inMinutes;
-    }
-    
-    if (totalUsageMinutes >= settings.dailyScreenTimeGoalMinutes) {
-       await _sendNudge(
-         id: 999,
-         title: "Daily Goal Reached",
-         body: "You've used ${totalUsageMinutes}m today. Time to disconnect?",
-         intensity: settings.nudgeIntensity,
-       );
-       // We continue to check individual apps even if daily goal is met, 
-       // to provide specific context.
-    }
-
-    // 2. Check Individual App Thresholds (Nudge Frequency Logic)
-    // Threshold: 2 Hours (120 minutes)
-    const int appUsageThreshold = 120; 
-
-    // Frequency Logic:
-    // Workmanager runs every ~15 mins.
-    // frequency 1.0 => Notify every time (15 mins)
-    // frequency 0.5 => Notify ~50% of the time (30 mins)
-    // frequency 0.1 => Notify ~10% of the time (2.5 hours)
+    const int appUsageThreshold = 120; // 2 hours
     final shouldNudge = Random().nextDouble() < settings.breakReminderFrequency;
 
     if (shouldNudge) {
       for (var info in infoList) {
         if (info.usage.inMinutes >= appUsageThreshold) {
-           await _sendNudge(
-             id: info.packageName.hashCode,
-             title: "High Usage Alert",
-             body: "You've been using ${info.appName} for ${info.usage.inMinutes}m today.",
-             intensity: settings.nudgeIntensity,
+           final appData = installedAppsBox.values.firstWhere(
+             (app) => app.packageName == info.packageName,
+             orElse: () => InstalledApp(packageName: info.packageName, name: info.appName),
            );
-           break; // Notify for the most egregious app only to avoid spam
+
+           if (appData.assignedCategoryName == 'Productivity') {
+               await _sendNudge(
+                 id: info.packageName.hashCode,
+                 title: "Great work!",
+                 body: "You've been productive. Swap to Entertainment?",
+                 intensity: settings.nudgeIntensity,
+                 payload: 'target_category:Entertainment', // <--- Trigger swap filter
+               );
+           } else {
+               await _sendNudge(
+                 id: info.packageName.hashCode,
+                 title: "High Usage Alert",
+                 body: "You've been using ${info.appName} for ${info.usage.inMinutes}m.",
+                 intensity: settings.nudgeIntensity,
+               );
+           }
+           break; 
         }
       }
     }
-
   } catch (e) {
     print("Background Usage Check Failed: $e");
   } finally {
     await settingsBox.close();
+    await installedAppsBox.close();
   }
 }
 
@@ -88,6 +89,7 @@ Future<void> _sendNudge({
   required String title,
   required String body,
   required double intensity,
+  String? payload,
 }) async {
   String finalTitle = title;
   String finalBody = body;
@@ -100,11 +102,10 @@ Future<void> _sendNudge({
     finalBody = "Hey, $body maybe take a breath?";
   }
   
-  print("Sending Notification: $finalTitle"); 
-
   await NotificationService.showNotification(
     id: id,
     title: finalTitle,
     body: finalBody,
+    payload: payload,
   );
 }

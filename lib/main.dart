@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:workmanager/workmanager.dart'; 
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'core/service_locator.dart' as di; 
 import 'core/routes.dart';
 
-// Import services and entities directly
-import 'core/services/background_service.dart'; // Contains callbackDispatcher and usageCheckTask
+import 'core/services/background_service.dart'; // Imports notificationTapBackground
 import 'core/services/notification_service.dart';
 import 'features/app_management/presentation/pages/pages.dart';
 import 'features/app_management/domain/entities/entities.dart';
 import 'features/app_management/presentation/pages/preferences_screen.dart';
 
-// Helper function definition for MyApp class (assuming it's defined at the bottom)
+// UPDATED: Global variable for the swap logic
+String? pendingCategoryFilter;
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
   @override
@@ -40,39 +42,33 @@ class MyApp extends StatelessWidget {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 1. Initialize Hive & DI
   await Hive.initFlutter();
   Hive.registerAdapter(AppCategoryEntityAdapter());
   Hive.registerAdapter(InstalledAppAdapter());
-  // Ensure UserSettingsEntityAdapter is registered (assuming it is TypeId 2)
   Hive.registerAdapter(UserSettingsEntityAdapter());
 
-  // Open Boxes
   await Hive.openBox<AppCategoryEntity>('categories');
   await Hive.openBox<InstalledApp>('installed_apps');
   await Hive.openBox<UserSettingsEntity>('settings');
 
-  // --- Temporary Mock Data (COMMENT OUT AFTER TESTING) ---
-  // Note: Since we are saving settings via the UI now, we don't need this
-  // unless we are testing the background service immediately after first install.
-  // await _initializeMockDataForTesting(Hive.box('settings'), ...);
-  // --------------------------------------------------------
-
   di.init(); 
 
-  // 2. Initialize Notifications (Foreground)
-  await NotificationService.initialize();
-
-  // 3. Initialize Workmanager and schedule task
-  await Workmanager().initialize(
-    callbackDispatcher, 
-    isInDebugMode: true 
+  // UPDATED: Initializing with both foreground and background callbacks
+  await NotificationService.initialize(
+    onNotificationResponse: (NotificationResponse response) {
+      final payload = response.payload;
+      if (payload != null && payload.startsWith('target_category:')) {
+        pendingCategoryFilter = payload.split(':')[1];
+      }
+    },
+    onBackgroundNotificationResponse: notificationTapBackground,
   );
 
-  // 4. Schedule the Periodic Task
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+
   await Workmanager().registerPeriodicTask(
-    "1", // Job ID
-    usageCheckTask, // Task Name
+    "1", 
+    usageCheckTask, 
     frequency: const Duration(minutes: 15),
     constraints: Constraints(),
   );

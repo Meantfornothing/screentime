@@ -18,22 +18,18 @@ class CategorizationRepositoryImpl implements CategorizationRepository {
 
   @override
   Future<List<InstalledApp>> getInstalledApps({bool forceRefresh = false}) async {
-    // 1. Get cached apps
     List<InstalledApp> apps = await localDataSource.getCachedInstalledApps();
     
-    // 2. If force refresh is requested OR cache is empty, fetch from the OS
     if (forceRefresh || apps.isEmpty) {
       try {
         final osApps = await installedAppsDataSource.getInstalledAppsFromOS();
         await localDataSource.cacheInstalledApps(osApps);
         apps = osApps;
       } catch (e) {
-        // Fallback to cache if OS fetch fails, or return empty if both fail
         if (apps.isEmpty) return [];
       }
     }
 
-    // 3. Merge live usage data
     final usageMap = await appUsageDataSource.getDailyUsage();
     return apps.map((app) {
       final usage = usageMap[app.packageName] ?? Duration.zero;
@@ -48,7 +44,7 @@ class CategorizationRepositoryImpl implements CategorizationRepository {
 
   @override
   Future<void> addCategory(AppCategoryEntity category) async {
-    // This now matches the updated interface signature (takes Entity, not String)
+    // FIX: Passing the entity directly
     await localDataSource.addCategory(category);
   }
 

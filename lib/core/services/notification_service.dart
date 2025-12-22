@@ -5,24 +5,32 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  static Future<void> initialize() async {
+  // UPDATED: Added named parameters for callbacks
+  static Future<void> initialize({
+    void Function(NotificationResponse)? onNotificationResponse,
+    void Function(NotificationResponse)? onBackgroundNotificationResponse,
+  }) async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // On iOS, we need to request permissions explicitly
-    final DarwinInitializationSettings initializationSettingsDarwin =
+    const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
 
-    final InitializationSettings initializationSettings = InitializationSettings(
+    const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
     );
 
-    await _notificationsPlugin.initialize(initializationSettings);
+    // UPDATED: Passing the callbacks to the plugin
+    await _notificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: onNotificationResponse,
+      onDidReceiveBackgroundNotificationResponse: onBackgroundNotificationResponse,
+    );
   }
 
   static Future<void> showNotification({
@@ -31,18 +39,16 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    // 1. Define BigTextStyle for expanded view
     final BigTextStyleInformation bigTextStyleInformation =
         BigTextStyleInformation(
       body,
       htmlFormatBigText: true,
       contentTitle: '<b>$title</b>',
       htmlFormatContentTitle: true,
-      summaryText: 'Usage Alert', // Small text next to app name
+      summaryText: 'Usage Alert',
       htmlFormatSummaryText: true,
     );
 
-    // 2. Android Specifics
     final AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'usage_monitor_channel', 
@@ -51,9 +57,8 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.high,
       showWhen: true,
-      color: const Color(0xFFD4AF98), // Use your app's brand color (Beige/Brown)
-      styleInformation: bigTextStyleInformation, // Apply the big text style
-      // Optional: Add actions
+      color: const Color(0xFFD4AF98),
+      styleInformation: bigTextStyleInformation,
       actions: <AndroidNotificationAction>[
         const AndroidNotificationAction(
           'snooze_action', 
@@ -64,7 +69,6 @@ class NotificationService {
       ],
     );
 
-    // 3. iOS Specifics
     const DarwinNotificationDetails iOSPlatformChannelSpecifics =
         DarwinNotificationDetails(
       presentAlert: true,

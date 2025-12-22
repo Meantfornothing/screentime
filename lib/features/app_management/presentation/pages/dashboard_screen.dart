@@ -3,12 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/service_locator.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/routes.dart';
+import '../../../../main.dart'; // REQUIRED to access pendingCategoryFilter
 
-// Import Cubit and State
 import '../cubit/dashboard_cubit.dart';
 import '../cubit/dashboard_state.dart';
-
-// Import Entities and Widgets
 import '../../domain/entities/entities.dart';
 import '../widgets/widgets.dart';
 
@@ -33,20 +31,34 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-class _DashboardView extends StatelessWidget {
+class _DashboardView extends StatefulWidget {
   const _DashboardView();
+
+  @override
+  State<_DashboardView> createState() => _DashboardViewState();
+}
+
+class _DashboardViewState extends State<_DashboardView> {
+  @override
+  void initState() {
+    super.initState();
+    // UPDATED: Check for the filter when the screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (pendingCategoryFilter != null) {
+        context.read<DashboardCubit>().loadDashboardData(categoryFilter: pendingCategoryFilter);
+        pendingCategoryFilter = null; // Clear it so it doesn't persist
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 1. & 3. Removed AppBar and updated the button to be a centered, highly visible Extended FAB
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 16.0),
         child: FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.pushNamed(context, AppRoutes.preferences);
-          },
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.preferences),
           label: const Text('Preferences', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           icon: const Icon(Icons.settings),
           backgroundColor: const Color(0xFFD4AF98),
@@ -57,52 +69,32 @@ class _DashboardView extends StatelessWidget {
       body: SafeArea(
         child: BlocBuilder<DashboardCubit, DashboardState>(
           builder: (context, state) {
-            
             if (state.status == DashboardStatus.loading) {
                return const Center(child: CircularProgressIndicator(color: Color(0xFFD4AF98)));
             }
-
             if (state.status == DashboardStatus.failure) {
-              return Center(child: Text('Failed to load dashboard: ${state.insightMessage}'));
+              return Center(child: Text('Error: ${state.insightMessage}'));
             }
 
             return ListView(
-              // Increased bottom padding to prevent FAB from overlapping content
               padding: const EdgeInsets.fromLTRB(20.0, 32.0, 20.0, 120.0), 
               children: [
-                // Header Replacement
-                Text(
-                  'Hi ${state.userName}!',
-                  style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: Colors.black),
-                ),
+                Text('Hi ${state.userName}!', style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 Text(
                   'Total Screen Time: ${state.totalScreenTime.inHours}h ${state.totalScreenTime.inMinutes % 60}m',
                   style: const TextStyle(fontSize: 16, color: Colors.black54),
                 ),
                 const SizedBox(height: 30),
-
-                const AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: PlaceholderChart(), 
-                ),
+                const AspectRatio(aspectRatio: 16 / 9, child: PlaceholderChart()),
                 const SizedBox(height: 16),
-
                 _buildCategoryLegend(),
                 const SizedBox(height: 30),
-
-                const Text(
-                  'Insights',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.black87),
-                ),
+                const Text('Insights', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 10),
                 InsightsCard(content: state.insightMessage),
                 const SizedBox(height: 30),
-
-                const Text(
-                  'Suggested Apps', 
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.black87),
-                ),
+                Text(state.recommendationMessage, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 10),
                 RecommendationsCard(
                   content: state.recommendationMessage,
@@ -110,8 +102,6 @@ class _DashboardView extends StatelessWidget {
                   getCategoryColor: getCategoryColor, 
                 ),
                 const SizedBox(height: 30),
-
-                // Manual test link at bottom
                 TextButton.icon(
                   onPressed: () => NotificationService.showNotification(
                     id: 999, title: 'System Check', body: 'Notifications are active!'
@@ -136,19 +126,9 @@ class _DashboardView extends StatelessWidget {
       children: categories.map((category) => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: getCategoryColor(category),
-              shape: BoxShape.circle,
-            ),
-          ),
+          Container(width: 10, height: 10, decoration: BoxDecoration(color: getCategoryColor(category), shape: BoxShape.circle)),
           const SizedBox(width: 8),
-          Text(
-            category,
-            style: const TextStyle(fontSize: 14, color: Colors.black54),
-          ),
+          Text(category, style: const TextStyle(fontSize: 14, color: Colors.black54)),
         ],
       )).toList(),
     );
