@@ -85,6 +85,27 @@ class _DashboardViewState extends State<_DashboardView> {
                   'Total Screen Time: ${state.totalScreenTime.inHours}h ${state.totalScreenTime.inMinutes % 60}m',
                   style: const TextStyle(fontSize: 16, color: Colors.black54),
                 ),
+                // --- TEST NOTIFICATION SECTION ---
+                const SizedBox(height: 20),
+                Card(
+                  color: Colors.orange.shade50,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: [
+                        const Text("Developer Test Tools", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        ElevatedButton.icon(
+                          onPressed: () => _triggerTestSwapNotification(),
+                          icon: const Icon(Icons. notification_important),
+                          label: const Text("Simulate 'Productivity' Swap Nudge"),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent, foregroundColor: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // ---------------------------------
                 const SizedBox(height: 30),
                 const AspectRatio(aspectRatio: 16 / 9, child: PlaceholderChart()),
                 const SizedBox(height: 16),
@@ -115,6 +136,16 @@ class _DashboardViewState extends State<_DashboardView> {
           },
         ),
       ),
+    );
+  }
+
+  // Helper function to trigger the notification manually
+  void _triggerTestSwapNotification() {
+    NotificationService.showNotification(
+      id: 888,
+      title: "Great work!",
+      body: "You've been productive for a while. Why not switch to an Entertainment app?",
+      payload: 'target_category:Entertainment', // This triggers the swap logic on tap
     );
   }
 

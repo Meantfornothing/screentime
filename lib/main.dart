@@ -4,6 +4,10 @@ import 'package:workmanager/workmanager.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'core/service_locator.dart' as di; 
 import 'core/routes.dart';
+import 'package:flutter/foundation.dart';
+
+import 'package:app_usage/app_usage.dart';
+import 'dart:io';
 
 import 'core/services/background_service.dart'; // Imports notificationTapBackground
 import 'core/services/notification_service.dart';
@@ -64,6 +68,29 @@ void main() async {
     onBackgroundNotificationResponse: notificationTapBackground,
   );
 
+// --- CORRECTED PERMISSION REQUEST ---
+  if (Platform.isAndroid) {
+    await FlutterLocalNotificationsPlugin()
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+  }
+  // -------------------------------------
+// Inside main() after NotificationService.initialize
+
+if (Platform.isAndroid) {
+  // Check usage access by attempting a fetch or using a specific grant call
+  // Some packages provide a direct check, e.g., UsageStats.checkUsagePermission()
+  try {
+    await AppUsage().getAppUsage(
+      DateTime.now().subtract(const Duration(minutes: 1)), 
+      DateTime.now()
+    );
+  } catch (exception) {
+    // If usage fails, it usually means permission isn't granted.
+    // You can use a package like 'usage_stats' to call: UsageStats.grantUsagePermission();
+    print("Usage access not granted. Redirecting user...");
+  }
+}
   await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
 
   await Workmanager().registerPeriodicTask(
