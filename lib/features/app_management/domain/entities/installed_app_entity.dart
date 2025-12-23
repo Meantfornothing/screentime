@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'dart:typed_data';
 
 @HiveType(typeId: 1)
 class InstalledApp extends HiveObject {
@@ -13,12 +14,14 @@ class InstalledApp extends HiveObject {
 
   // New: Tracks usage duration. Not persisted (@HiveField omitted).
   final Duration usageDuration;
+  final Uint8List? iconBytes; // New Field for the icon
 
   InstalledApp({
     required this.packageName, 
     required this.name, 
     this.assignedCategoryName,
     this.usageDuration = Duration.zero,
+    this.iconBytes,
   });
   
   // Helper for immutability
@@ -27,12 +30,14 @@ class InstalledApp extends HiveObject {
     String? name,
     String? assignedCategoryName,
     Duration? usageDuration,
+    Uint8List? iconBytes,
   }) {
     return InstalledApp(
       packageName: packageName ?? this.packageName,
       name: name ?? this.name,
       assignedCategoryName: assignedCategoryName ?? this.assignedCategoryName,
       usageDuration: usageDuration ?? this.usageDuration,
+      iconBytes: iconBytes ?? this.iconBytes,
     );
   }
 }

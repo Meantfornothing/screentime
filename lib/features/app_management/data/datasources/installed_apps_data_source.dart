@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import '../../domain/entities/installed_app_entity.dart';
+import 'dart:typed_data';
 
 abstract class InstalledAppsDataSource {
   Future<List<InstalledApp>> getInstalledAppsFromOS();
@@ -19,6 +20,7 @@ class InstalledAppsDataSourceImpl implements InstalledAppsDataSource {
         return InstalledApp(
           packageName: map['packageName'] ?? '',
           name: map['appName'] ?? 'Unknown App',
+          iconBytes: map['icon'], // Map the bytes here
           assignedCategoryName: null, 
         );
       }).toList();

@@ -1,10 +1,15 @@
 package com.example.screentime
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.ByteArrayOutputStream
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "com.screentime/usage_monitor"
@@ -22,40 +27,59 @@ class MainActivity: FlutterActivity() {
         }
     }
 
-    private fun getInstalledApps(): List<Map<String, String>> {
-        val appsList = mutableListOf<Map<String, String>>()
+    private fun getInstalledApps(): List<Map<String, Any?>> {
+        val appsList = mutableListOf<Map<String, Any?>>()
         val packageManager = context.packageManager
         
-        // Create an intent that targets the "Main" action for "Launcher" apps
-        // This effectively asks Android: "Give me everything in the App Drawer"
         val intent = Intent(Intent.ACTION_MAIN, null)
         intent.addCategory(Intent.CATEGORY_LAUNCHER)
 
-        // Query for all activities that match this intent
         val apps = packageManager.queryIntentActivities(intent, 0)
 
         for (resolveInfo in apps) {
             val activityInfo = resolveInfo.activityInfo
-            
-            // Get the app name and package name
             val appName = resolveInfo.loadLabel(packageManager).toString()
             val packageName = activityInfo.packageName
 
-            // Avoid duplicates (sometimes an app has multiple launcher icons)
             val alreadyExists = appsList.any { it["packageName"] == packageName }
             
             if (!alreadyExists) {
+                // Fetch and convert icon to ByteArray
+                val iconBytes = getIconBytes(packageName)
+                
                 val appMap = mapOf(
                     "appName" to appName,
-                    "packageName" to packageName
+                    "packageName" to packageName,
+                    "icon" to iconBytes // This is passed as Uint8List to Flutter
                 )
                 appsList.add(appMap)
             }
         }
         
-        // Optional: Sort alphabetically for a nicer initial list
-        appsList.sortBy { it["appName"] }
-        
+        appsList.sortBy { it["appName"] as String }
         return appsList
+    }
+
+    // Helper to extract bytes from an App Icon
+    private fun getIconBytes(packageName: String): ByteArray? {
+        return try {
+            val drawable = packageManager.getApplicationIcon(packageName)
+            val bitmap = if (drawable is BitmapDrawable) {
+                drawable.bitmap
+            } else {
+                val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 1
+                val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 1
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(bitmap)
+                drawable.setBounds(0, 0, canvas.width, canvas.height)
+                drawable.draw(canvas)
+                bitmap
+            }
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            stream.toByteArray()
+        } catch (e: Exception) {
+            null
+        }
     }
 }

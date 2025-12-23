@@ -42,11 +42,11 @@ class _DashboardViewState extends State<_DashboardView> {
   @override
   void initState() {
     super.initState();
-    // UPDATED: Check for the filter when the screen opens
+    // Use addPostFrameCallback to ensure the Cubit is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (pendingCategoryFilter != null) {
         context.read<DashboardCubit>().loadDashboardData(categoryFilter: pendingCategoryFilter);
-        pendingCategoryFilter = null; // Clear it so it doesn't persist
+        pendingCategoryFilter = null; // Clear it for next time
       }
     });
   }
@@ -85,7 +85,8 @@ class _DashboardViewState extends State<_DashboardView> {
                   'Total Screen Time: ${state.totalScreenTime.inHours}h ${state.totalScreenTime.inMinutes % 60}m',
                   style: const TextStyle(fontSize: 16, color: Colors.black54),
                 ),
-                // --- TEST NOTIFICATION SECTION ---
+                
+                // --- TEST TOOLS SECTION ---
                 const SizedBox(height: 20),
                 Card(
                   color: Colors.orange.shade50,
@@ -96,16 +97,24 @@ class _DashboardViewState extends State<_DashboardView> {
                         const Text("Developer Test Tools", style: TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         ElevatedButton.icon(
-                          onPressed: () => _triggerTestSwapNotification(),
-                          icon: const Icon(Icons. notification_important),
-                          label: const Text("Simulate 'Productivity' Swap Nudge"),
+                          onPressed: () {
+                            NotificationService.showNotification(
+                              id: 888,
+                              title: "Great work!",
+                              body: "You've been productive. Swap to Entertainment?",
+                              payload: 'target_category:Entertainment',
+                            );
+                          },
+                          icon: const Icon(Icons.notification_important),
+                          label: const Text("Trigger Swap Nudge"),
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent, foregroundColor: Colors.white),
                         ),
                       ],
                     ),
                   ),
                 ),
-                // ---------------------------------
+                // --------------------------
+
                 const SizedBox(height: 30),
                 const AspectRatio(aspectRatio: 16 / 9, child: PlaceholderChart()),
                 const SizedBox(height: 16),
@@ -121,15 +130,6 @@ class _DashboardViewState extends State<_DashboardView> {
                   content: state.recommendationMessage,
                   recommendedApps: state.recommendedApps,
                   getCategoryColor: getCategoryColor, 
-                ),
-                const SizedBox(height: 30),
-                TextButton.icon(
-                  onPressed: () => NotificationService.showNotification(
-                    id: 999, title: 'System Check', body: 'Notifications are active!'
-                  ),
-                  icon: const Icon(Icons.notifications_active, size: 14),
-                  label: const Text('Test Notification System', style: TextStyle(fontSize: 12)),
-                  style: TextButton.styleFrom(foregroundColor: Colors.grey.shade400),
                 ),
               ],
             );

@@ -8,7 +8,7 @@ class DashboardCubit extends Cubit<DashboardState> {
 
   DashboardCubit(this.repository) : super(const DashboardState());
 
-  // UPDATED: Added categoryFilter parameter
+  // UPDATED: Accept an optional category filter
   Future<void> loadDashboardData({String? categoryFilter}) async {
     emit(state.copyWith(status: DashboardStatus.loading));
     
@@ -40,11 +40,12 @@ class DashboardCubit extends Cubit<DashboardState> {
         insight += " Most time spent in $topCategory (${topDuration.inMinutes}m).";
       }
 
-      // UPDATED: Filtering recommendations if a filter exists
+      // UPDATED: Recommendation Logic
       List<InstalledApp> recommended;
       String recMessage = "Your most used apps today:";
 
       if (categoryFilter != null) {
+        // Filter specifically for the "Swap" target (e.g., Entertainment)
         recommended = apps.where((a) => a.assignedCategoryName == categoryFilter).toList();
         recMessage = "Switch to these $categoryFilter apps:";
       } else {

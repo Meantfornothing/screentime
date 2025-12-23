@@ -42,7 +42,17 @@ class AppAssignmentTile extends StatelessWidget {
         padding: const EdgeInsets.only(left: 15, right: 5),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
+          children: [// Add the icon here
+            if (app.iconBytes != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: Image.memory(app.iconBytes!, width: 32, height: 32),
+              )
+            else
+              const Padding(
+                padding: EdgeInsets.only(right: 12.0),
+                child: Icon(Icons.android, size: 32, color: Colors.grey),
+              ),
             Expanded(
               child: Text(
                 app.name,
