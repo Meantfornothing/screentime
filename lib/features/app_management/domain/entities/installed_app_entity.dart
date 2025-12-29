@@ -56,7 +56,8 @@ class InstalledAppAdapter extends TypeAdapter<InstalledApp> {
       packageName: fields[0] as String,
       name: fields[1] as String,
       assignedCategoryName: fields[2] as String?,
-      usageDuration: Duration.zero, 
+      usageDuration: Duration.zero,
+       
     );
   }
 

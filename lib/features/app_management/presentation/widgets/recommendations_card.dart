@@ -1,6 +1,7 @@
 import 'dart:typed_data'; // REQUIRED
 import 'package:flutter/material.dart';
 import '../../domain/entities/installed_app_entity.dart';
+import 'package:external_app_launcher/external_app_launcher.dart'; // NEW
 
 class RecommendationsCard extends StatelessWidget {
   final String content;
@@ -26,15 +27,16 @@ class RecommendationsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(content, style: const TextStyle(fontSize: 16, color: Colors.black87)),
+          Text(content, style: const TextStyle(fontSize: 16, color: Colors.black87, fontWeight: FontWeight.w500)),
           const SizedBox(height: 15),
           Wrap(
             spacing: 16.0, 
             runSpacing: 16.0, 
             children: recommendedApps.map((app) => RecommendedAppIcon(
               appName: app.name,
+              packageName: app.packageName, // Make sure this exists in your entity
               categoryColor: getCategoryColor(app.assignedCategoryName ?? ''),
-              iconBytes: app.iconBytes, // Pass the bytes here
+              iconBytes: app.iconBytes,
               key: ValueKey(app.packageName),
             )).toList(),
           ),
@@ -46,48 +48,81 @@ class RecommendationsCard extends StatelessWidget {
 
 class RecommendedAppIcon extends StatelessWidget {
   final String appName;
+  final String packageName;
   final Color categoryColor;
-  final Uint8List? iconBytes; // Add the bytes field
+  final Uint8List? iconBytes;
   
   const RecommendedAppIcon({
     required this.appName, 
+    required this.packageName, 
     required this.categoryColor, 
     this.iconBytes, 
     super.key
   });
 
-  @override
+  Future<void> _handleAppLaunch() async {
+    await LaunchApp.openApp(
+      androidPackageName: packageName,
+      // iosUrlScheme is required if you ever port to iOS
+      // Example: 'instagram://'
+      openStore: true, // If app isn't found, it opens Play Store
+    );
+  }
+
+    @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: categoryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(14), 
-            border: Border.all(color: categoryColor.withOpacity(0.6), width: 1.5),
+    return InkWell(
+      onTap: _handleAppLaunch,
+      borderRadius: BorderRadius.circular(14),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 54, // Slightly larger for better tap target
+            height: 54,
+            decoration: BoxDecoration(
+              color: categoryColor.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: categoryColor.withOpacity(0.3), 
+                width: 1,
+              ),
+            ),
+            child: Center(
+              // logic: If iconBytes exists, show the Image. Otherwise, show the Icon
+              child: iconBytes != null && iconBytes!.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.memory(
+                        iconBytes!,
+                        width: 40, 
+                        height: 40,
+                        fit: BoxFit.contain, // Contain ensures the icon isn't cropped awkwardly
+                        // This error builder handles cases where bytes might be corrupted
+                        errorBuilder: (context, error, stackTrace) => 
+                            Icon(Icons.broken_image, color: categoryColor, size: 26),
+                      ),
+                    )
+                  : Icon(Icons.apps, color: categoryColor, size: 28),
+            ),
           ),
-          child: Center(
-            child: iconBytes != null 
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.memory(iconBytes!, width: 34, height: 34, fit: BoxFit.cover),
-                  )
-                : Icon(Icons.apps, color: categoryColor, size: 26),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: 60,
+            child: Text(
+              appName,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 10, 
+                color: Colors.black87, 
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        SizedBox(
-          width: 50,
-          child: Text(
-            appName.split(' ').first,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 10, color: Colors.black54),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

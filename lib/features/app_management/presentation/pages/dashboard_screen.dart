@@ -42,11 +42,11 @@ class _DashboardViewState extends State<_DashboardView> {
   @override
   void initState() {
     super.initState();
-    // Use addPostFrameCallback to ensure the Cubit is ready
+    // Check if the user arrived via notification
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (pendingCategoryFilter != null) {
         context.read<DashboardCubit>().loadDashboardData(categoryFilter: pendingCategoryFilter);
-        pendingCategoryFilter = null; // Clear it for next time
+        pendingCategoryFilter = null; // Clear after use
       }
     });
   }
@@ -113,7 +113,6 @@ class _DashboardViewState extends State<_DashboardView> {
                     ),
                   ),
                 ),
-                // --------------------------
 
                 const SizedBox(height: 30),
                 const AspectRatio(aspectRatio: 16 / 9, child: PlaceholderChart()),
@@ -136,16 +135,6 @@ class _DashboardViewState extends State<_DashboardView> {
           },
         ),
       ),
-    );
-  }
-
-  // Helper function to trigger the notification manually
-  void _triggerTestSwapNotification() {
-    NotificationService.showNotification(
-      id: 888,
-      title: "Great work!",
-      body: "You've been productive for a while. Why not switch to an Entertainment app?",
-      payload: 'target_category:Entertainment', // This triggers the swap logic on tap
     );
   }
 

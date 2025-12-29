@@ -60,25 +60,26 @@ class MainActivity: FlutterActivity() {
         return appsList
     }
 
-    // Helper to extract bytes from an App Icon
     private fun getIconBytes(packageName: String): ByteArray? {
         return try {
-            val drawable = packageManager.getApplicationIcon(packageName)
-            val bitmap = if (drawable is BitmapDrawable) {
-                drawable.bitmap
-            } else {
-                val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 1
-                val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 1
-                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                val canvas = Canvas(bitmap)
-                drawable.setBounds(0, 0, canvas.width, canvas.height)
-                drawable.draw(canvas)
-                bitmap
-            }
+            val drawable = context.packageManager.getApplicationIcon(packageName)
+            
+            // Define a standard size for the dashboard icons to save memory
+            val targetSize = 100 
+            val bitmap = Bitmap.createBitmap(targetSize, targetSize, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            
+            // This handles both BitmapDrawable and AdaptiveIconDrawable correctly
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+
             val stream = ByteArrayOutputStream()
+            // Use JPEG with 80% quality to significantly reduce data size if icons are still missing
+            // or keep PNG for transparency if you have few apps.
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
             stream.toByteArray()
         } catch (e: Exception) {
+            Log.e("UsageMonitor", "Failed to load icon for $packageName: ${e.message}")
             null
         }
     }
