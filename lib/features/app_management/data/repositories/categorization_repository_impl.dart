@@ -16,26 +16,40 @@ class CategorizationRepositoryImpl implements CategorizationRepository {
     required this.appUsageDataSource,
   });
 
-  @override
-  Future<List<InstalledApp>> getInstalledApps({bool forceRefresh = false}) async {
-    List<InstalledApp> apps = await localDataSource.getCachedInstalledApps();
-    
-    if (forceRefresh || apps.isEmpty) {
-      try {
-        final osApps = await installedAppsDataSource.getInstalledAppsFromOS();
-        await localDataSource.cacheInstalledApps(osApps);
-        apps = osApps;
-      } catch (e) {
-        if (apps.isEmpty) return [];
-      }
-    }
+@override
+Future<List<InstalledApp>> getInstalledApps({bool forceRefresh = false}) async {
+  // 1. Get metadata (PackageNames/Categories) from Hive
+  List<InstalledApp> cachedApps = await localDataSource.getCachedInstalledApps();
+  
+  // 2. Always fetch fresh icons from the OS
+  // (MethodChannel is fast enough for this)
+  final osApps = await installedAppsDataSource.getInstalledAppsFromOS();
 
-    final usageMap = await appUsageDataSource.getDailyUsage();
-    return apps.map((app) {
-      final usage = usageMap[app.packageName] ?? Duration.zero;
-      return app.copyWith(usageDuration: usage);
-    }).toList();
+  if (cachedApps.isEmpty || forceRefresh) {
+    await localDataSource.cacheInstalledApps(osApps);
+    cachedApps = osApps;
   }
+
+  // 3. THE FIX: Merge (Hydrate) the icons into your cached list
+  final List<InstalledApp> appsWithIcons = cachedApps.map((cachedApp) {
+    // Find the corresponding app from the OS fetch to get its icon
+    final osApp = osApps.firstWhere(
+      (os) => os.packageName == cachedApp.packageName,
+      orElse: () => osApps.first,
+    );
+
+    return cachedApp.copyWith(
+      iconBytes: osApp.iconBytes, // Attach the fresh icon bytes here
+    );
+  }).toList();
+
+  // 4. Attach usage duration and return
+  final usageMap = await appUsageDataSource.getDailyUsage();
+  return appsWithIcons.map((app) {
+    final usage = usageMap[app.packageName] ?? Duration.zero;
+    return app.copyWith(usageDuration: usage);
+  }).toList();
+}
 
   @override
   Future<List<AppCategoryEntity>> getCategories() async {

@@ -2,20 +2,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/categorization_repository_interface.dart';
 import '../../domain/entities/installed_app_entity.dart';
 import 'dashboard_state.dart';
+import 'dart:math';
 
 class DashboardCubit extends Cubit<DashboardState> {
   final CategorizationRepository repository;
 
   DashboardCubit(this.repository) : super(const DashboardState());
 
-  /// Loads dashboard data. Accepts an optional [categoryFilter] to handle
-  /// targeted app recommendations (e.g., from a "swap" notification).
+  /// Loads dashboard data. 
+  /// [categoryFilter] can be passed manually (e.g. from a notification).
+  /// If null, the logic dynamically picks a "Swap" category.
   Future<void> loadDashboardData({String? categoryFilter}) async {
     emit(state.copyWith(status: DashboardStatus.loading));
     
     try {
-      // 1. Fetch apps
+      // 1. Fetch apps and categories
       final apps = await repository.getInstalledApps();
+      final userCategories = await repository.getCategories();
 
       // 2. Calculate Total Usage
       Duration totalUsage = Duration.zero;
@@ -48,24 +51,37 @@ class DashboardCubit extends Cubit<DashboardState> {
         insight = "No usage data yet. Start using categorized apps to see insights!";
       }
 
-      // 6. Recommendation Logic (Swap Nudge Support)
-      List<InstalledApp> recommended;
-      String recMessage;
+      // 6. Recommendation Logic (Dynamic Swap)
+      List<InstalledApp> recommended = [];
+      String recMessage = "";
 
-      if (categoryFilter != null) {
-        // Targeted recommendations: Show apps from the target category (e.g., Entertainment)
-        recommended = apps.where((app) => app.assignedCategoryName == categoryFilter).toList();
-        recMessage = "Switch to these $categoryFilter apps:";
+      // Logic: If we have a specific filter (e.g. from notification), use it.
+      // Otherwise, pick a category that is NOT the top used one.
+      String? targetCategory = categoryFilter;
+
+      if (targetCategory == null && userCategories.isNotEmpty) {
+        // Find categories that aren't the one currently being overused
+        final otherCategories = userCategories
+            .map((e) => e.name)
+            .where((name) => name != topCategory)
+            .toList();
         
-        // Fallback if no apps are categorized under the target
-        if (recommended.isEmpty) {
-          recMessage = "No apps found in '$categoryFilter'. Try these instead:";
-          final sortedApps = List<InstalledApp>.from(apps);
-          sortedApps.sort((a, b) => b.usageDuration.compareTo(a.usageDuration));
-          recommended = sortedApps.take(5).toList();
+        if (otherCategories.isNotEmpty) {
+          // Pick a random alternative category to keep it fresh
+          targetCategory = otherCategories[Random().nextInt(otherCategories.length)];
         }
-      } else {
-        // Default: Show top 4 used apps
+      }
+
+      if (targetCategory != null) {
+        recommended = apps.where((app) => app.assignedCategoryName == targetCategory).toList();
+        
+        if (recommended.isNotEmpty) {
+          recMessage = "Switch to your $targetCategory apps:";
+        }
+      }
+
+      // 7. Fallback: If no categorized recommendations found, show most used
+      if (recommended.isEmpty) {
         final sortedApps = List<InstalledApp>.from(apps);
         sortedApps.sort((a, b) => b.usageDuration.compareTo(a.usageDuration));
         recommended = sortedApps.take(5).toList();

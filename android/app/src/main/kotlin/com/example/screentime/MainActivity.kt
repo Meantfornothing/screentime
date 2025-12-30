@@ -10,6 +10,7 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
+import android.util.Log
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "com.screentime/usage_monitor"
