@@ -37,22 +37,18 @@ class RecommendationsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          if (recommendedApps.isEmpty)
-            const Text("No apps categorized for recommendation yet.", 
-                style: TextStyle(fontSize: 12, color: Colors.grey))
-          else
-            Wrap(
-              spacing: 16.0,
-              runSpacing: 16.0,
-              alignment: WrapAlignment.start,
-              children: recommendedApps.map((app) => _RecommendedAppIcon(
-                    appName: app.name,
-                    packageName: app.packageName,
-                    categoryColor: getCategoryColor(app.assignedCategoryName ?? ''),
-                    iconBytes: app.iconBytes,
-                    key: ValueKey(app.packageName),
-                  )).toList(),
-            ),
+          Wrap(
+            spacing: 16.0,
+            runSpacing: 16.0,
+            alignment: WrapAlignment.start,
+            children: recommendedApps.map((app) => _RecommendedAppIcon(
+                  appName: app.name,
+                  packageName: app.packageName,
+                  categoryColor: getCategoryColor(app.assignedCategoryName ?? ''),
+                  iconBytes: app.iconBytes,
+                  key: ValueKey(app.packageName),
+                )).toList(),
+          ),
         ],
       ),
     );
@@ -92,9 +88,12 @@ class _RecommendedAppIcon extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              // REMOVED visible border that could look like a "black border"
-              color: categoryColor.withOpacity(0.08),
+              color: categoryColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: categoryColor.withOpacity(0.4),
+                width: 1.5,
+              ),
             ),
             child: Center(
               child: iconBytes != null && iconBytes!.isNotEmpty
@@ -104,9 +103,7 @@ class _RecommendedAppIcon extends StatelessWidget {
                         iconBytes!,
                         width: 36,
                         height: 36,
-                        fit: BoxFit.contain, // Changed to contain for safety
-                        errorBuilder: (context, error, stackTrace) => 
-                          Icon(Icons.apps, color: categoryColor, size: 26),
+                        fit: BoxFit.cover,
                       ),
                     )
                   : Icon(Icons.apps, color: categoryColor, size: 26),

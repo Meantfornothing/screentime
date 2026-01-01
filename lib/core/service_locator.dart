@@ -24,7 +24,7 @@ import '../features/app_management/data/datasources/app_usage_local_data_source.
 
 final sl = GetIt.instance;
 
-void init() { 
+Future<void> init() async{ 
   // 1. Data Sources
   sl.registerLazySingleton<CategorizationLocalDataSource>(
     () => CategorizationLocalDataSourceImpl(

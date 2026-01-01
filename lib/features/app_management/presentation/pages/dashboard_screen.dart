@@ -1,156 +1,155 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/service_locator.dart';
-import '../../../../core/services/notification_service.dart';
-import '../../../../core/routes.dart';
-import '../../../../main.dart'; // REQUIRED to access pendingCategoryFilter
-
 import '../cubit/dashboard_cubit.dart';
 import '../cubit/dashboard_state.dart';
-import '../../domain/entities/entities.dart';
-import '../widgets/widgets.dart';
+import '../widgets/insight_card.dart';
+import '../widgets/recommendations_card.dart';
+import 'preferences_screen.dart';
+import '../../../../core/services/notification_service.dart';
 
-Color getCategoryColor(String name) {
-  switch (name) {
-    case 'Relaxation': return Colors.blue.shade600;
-    case 'Entertainment': return Colors.red.shade600;
-    case 'Productivity': return Colors.green.shade600;
-    default: return Colors.grey;
-  }
-}
-
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<DashboardCubit>()..loadDashboardData(),
-      child: const _DashboardView(),
-    );
-  }
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardView extends StatefulWidget {
-  const _DashboardView();
-
-  @override
-  State<_DashboardView> createState() => _DashboardViewState();
-}
-
-class _DashboardViewState extends State<_DashboardView> {
+class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    // Check if the user arrived via notification
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (pendingCategoryFilter != null) {
-        context.read<DashboardCubit>().loadDashboardData(categoryFilter: pendingCategoryFilter);
-        pendingCategoryFilter = null; // Clear after use
-      }
-    });
+    context.read<DashboardCubit>().loadDashboardData();
+  }
+
+  /// Map categories to colors. Handles custom categories dynamically.
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case 'Productivity':
+        return Colors.purple;
+      case 'Entertainment':
+        return Colors.orange;
+      case 'Neutral':
+        return Colors.blueGrey;
+      case 'Uncategorized':
+      case '':
+        return Colors.grey.shade400;
+      default:
+        final customColors = [
+          Colors.blue,
+          Colors.green,
+          Colors.teal,
+          Colors.indigo,
+          Colors.pink,
+          Colors.amber,
+          Colors.cyan,
+        ];
+        return customColors[category.hashCode.abs() % customColors.length];
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 16.0),
-        child: FloatingActionButton.extended(
-          onPressed: () => Navigator.pushNamed(context, AppRoutes.preferences),
-          label: const Text('Preferences', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          icon: const Icon(Icons.settings),
-          backgroundColor: const Color(0xFFD4AF98),
-          foregroundColor: Colors.white,
-          elevation: 6,
-        ),
-      ),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: BlocBuilder<DashboardCubit, DashboardState>(
           builder: (context, state) {
             if (state.status == DashboardStatus.loading) {
-               return const Center(child: CircularProgressIndicator(color: Color(0xFFD4AF98)));
-            }
-            if (state.status == DashboardStatus.failure) {
-              return Center(child: Text('Error: ${state.insightMessage}'));
+              return const Center(child: CircularProgressIndicator());
             }
 
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(20.0, 32.0, 20.0, 120.0), 
-              children: [
-                Text('Hi ${state.userName}!', style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(
-                  'Total Screen Time: ${state.totalScreenTime.inHours}h ${state.totalScreenTime.inMinutes % 60}m',
-                  style: const TextStyle(fontSize: 16, color: Colors.black54),
-                ),
-                
-                // --- TEST TOOLS SECTION ---
-                const SizedBox(height: 20),
-                Card(
-                  color: Colors.orange.shade50,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
+            return RefreshIndicator(
+              onRefresh: () => context.read<DashboardCubit>().loadDashboardData(),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                children: [
+                  // 1. Header with Title and Settings Icon
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text("Developer Test Tools", style: TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        ElevatedButton.icon(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Hello, ${state.userName}",
+                              style: TextStyle(
+                                fontSize: 14, 
+                                color: Colors.grey.shade600, 
+                                fontWeight: FontWeight.w500
+                              ),
+                            ),
+                            const Text(
+                              "Your Dashboard",
+                              style: TextStyle(
+                                fontSize: 28, 
+                                fontWeight: FontWeight.bold, 
+                                color: Colors.black
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.settings_outlined, size: 28),
                           onPressed: () {
-                            NotificationService.showNotification(
-                              id: 888,
-                              title: "Great work!",
-                              body: "You've been productive. Swap to Entertainment?",
-                              payload: 'target_category:Entertainment',
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const PreferencesScreen()),
                             );
                           },
-                          icon: const Icon(Icons.notification_important),
-                          label: const Text("Trigger Swap Nudge"),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent, foregroundColor: Colors.white),
                         ),
                       ],
                     ),
                   ),
-                ),
+                  const SizedBox(height: 25),
 
-                const SizedBox(height: 30),
-                const AspectRatio(aspectRatio: 16 / 9, child: PlaceholderChart()),
-                const SizedBox(height: 16),
-                _buildCategoryLegend(),
-                const SizedBox(height: 30),
-                const Text('Insights', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 10),
-                InsightsCard(content: state.insightMessage),
-                const SizedBox(height: 30),
-                Text(state.recommendationMessage, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 10),
-                RecommendationsCard(
-                  content: state.recommendationMessage,
-                  recommendedApps: state.recommendedApps,
-                  getCategoryColor: getCategoryColor, 
-                ),
-              ],
+                  // 2. Insight Card (Summary of usage)
+                  InsightCard(content: state.insightMessage),
+
+                  const SizedBox(height: 10),
+
+                  // 3. Recommendations Card (Apps based on current context/nudge)
+                  RecommendationsCard(
+                    content: state.recommendationMessage,
+                    recommendedApps: state.recommendedApps,
+                    getCategoryColor: _getCategoryColor,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // 4. Test Notification Button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        // FIX: Calling NotificationService statically. 
+                        // Note: Instances (from sl) cannot access static members.
+                        // We must provide 'id', 'title', and 'body' as required by your service.
+                        await NotificationService.showNotification(
+                          id: 1,
+                          title: "Productivity Boost?",
+                          body: "It's time to focus. Switch to your Productivity apps.",
+                          payload: "Productivity", 
+                        );
+                      },
+                      icon: const Icon(Icons.notification_add_outlined),
+                      label: const Text("Test Clickable Swap Nudge"),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.all(16),
+                        foregroundColor: Colors.grey.shade700,
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             );
           },
         ),
       ),
-    );
-  }
-
-  Widget _buildCategoryLegend() {
-    final categories = ['Relaxation', 'Entertainment', 'Productivity'];
-    return Wrap(
-      spacing: 16.0,
-      runSpacing: 8.0,
-      children: categories.map((category) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(width: 10, height: 10, decoration: BoxDecoration(color: getCategoryColor(category), shape: BoxShape.circle)),
-          const SizedBox(width: 8),
-          Text(category, style: const TextStyle(fontSize: 14, color: Colors.black54)),
-        ],
-      )).toList(),
     );
   }
 }
