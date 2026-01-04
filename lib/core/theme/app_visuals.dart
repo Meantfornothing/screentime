@@ -18,5 +18,5 @@ class AppColors {
 class AppShapes {
   static const double cardRadius = 16.0;
   static const double buttonRadius = 12.0;
-  static final BorderRadius cardBorder = BorderRadius.circular(cardRadius);
+  static const BorderRadius cardBorder = BorderRadius.all(Radius.circular(cardRadius));
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'setting_card.dart'; 
+import '../../../../core/theme/app_visuals.dart';
 
 class TimePickerSetting extends StatefulWidget {
   final String title;

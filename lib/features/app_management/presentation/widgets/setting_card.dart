@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_visuals.dart';
 // Custom Widgets (For now, defined locally until we move them to /widgets)
 // =================================================================
 

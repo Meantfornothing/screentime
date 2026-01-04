@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:external_app_launcher/external_app_launcher.dart';
 import '../../domain/entities/installed_app_entity.dart';
+import '../../../../core/theme/app_visuals.dart';
 
 class RecommendationsCard extends StatelessWidget {
   final String content;
@@ -21,9 +22,9 @@ class RecommendationsCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade200),
+        color: AppColors.surface, // Clean light grey for secondary info
+        borderRadius: AppShapes.cardBorder,
+        border: Border.all(color: AppColors.textSecondary.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,14 +33,17 @@ class RecommendationsCard extends StatelessWidget {
             content,
             style: const TextStyle(
               fontSize: 15,
-              color: Colors.black87,
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w600,
+              letterSpacing: -0.2,
             ),
           ),
           const SizedBox(height: 18),
           if (recommendedApps.isEmpty)
-            const Text("No apps categorized for recommendation yet.", 
-                style: TextStyle(fontSize: 12, color: Colors.grey))
+            const Text(
+              "No apps categorized for recommendation yet.", 
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            )
           else
             Wrap(
               spacing: 16.0,
@@ -84,7 +88,8 @@ class _RecommendedAppIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: _handleAppLaunch,
-      borderRadius: BorderRadius.circular(16),
+      // Using buttonRadius (12.0) for internal clickable elements
+      borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -92,19 +97,19 @@ class _RecommendedAppIcon extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              // REMOVED visible border that could look like a "black border"
+              // Using a subtle tint of the category color
               color: categoryColor.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
             ),
             child: Center(
               child: iconBytes != null && iconBytes!.isNotEmpty
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                       child: Image.memory(
                         iconBytes!,
                         width: 36,
                         height: 36,
-                        fit: BoxFit.contain, // Changed to contain for safety
+                        fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) => 
                           Icon(Icons.apps, color: categoryColor, size: 26),
                       ),
@@ -121,7 +126,7 @@ class _RecommendedAppIcon extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 10,
-                color: Colors.black54,
+                color: AppColors.textSecondary,
                 fontWeight: FontWeight.bold,
               ),
             ),

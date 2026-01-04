@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../pages/usage_time_screen.dart';
+import '../../../../core/theme/app_visuals.dart';
 
 class InsightCard extends StatelessWidget {
-  // We use 'content' to match the call in DashboardScreen
   final String content;
 
   const InsightCard({required this.content, super.key});
@@ -12,51 +12,52 @@ class InsightCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blue.shade400, Colors.blue.shade700],
+        // Using your Primary Beige to Primary Variant for a subtle brand gradient
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryVariant],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppShapes.cardBorder, 
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: AppColors.primary.withOpacity(0.25),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.auto_awesome, color: Colors.white, size: 20),
-              SizedBox(width: 8),
+              const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
               Text(
-                "Daily Insight",
+                "DAILY INSIGHT",
                 style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             content,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
-              height: 1.4,
+              height: 1.3,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: TextButton(
@@ -67,11 +68,12 @@ class InsightCard extends StatelessWidget {
                 );
               },
               style: TextButton.styleFrom(
+                // Using white with low opacity to let the brand beige peek through
                 backgroundColor: Colors.white.withOpacity(0.15),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
                 ),
               ),
               child: const Row(
@@ -79,10 +81,10 @@ class InsightCard extends StatelessWidget {
                 children: [
                   Text(
                     "View Detailed Usage",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward_ios, size: 12),
+                  SizedBox(width: 10),
+                  Icon(Icons.arrow_forward_rounded, size: 16),
                 ],
               ),
             ),

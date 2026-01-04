@@ -122,11 +122,6 @@ class _CategorizationViewState extends State<_CategorizationView> {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddCategoryDialog(context),
-        backgroundColor: const Color(0xFFD4AF98),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
   }
 

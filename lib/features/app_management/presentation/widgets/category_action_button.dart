@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_visuals.dart'; //
 
-// =================================================================
-// Feature-Specific Widgets (In lib/features/.../presentation/widgets)
-// =================================================================
-
-/// Replicates the button for adding a category (Top of the screen).
 class CategoryActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
-  final Color color;
+  final Color? color; // Made optional to support the theme default
   final VoidCallback onPressed;
 
   const CategoryActionButton({
     required this.label,
     required this.icon,
-    required this.color,
+    this.color, // Optional: defaults to theme primary if null
     required this.onPressed,
+    super.key,
   });
 
   @override
@@ -23,16 +20,22 @@ class CategoryActionButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
+        // 1. Only override the background if a specific color is passed
+        backgroundColor: color, 
+        // 2. Keep the unique layout requirements (full width)
         minimumSize: const Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 2,
+        // 3. Ensure the shape matches your app constants
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          Text(
+            label, 
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)
+          ),
           const SizedBox(width: 8),
           Icon(icon, size: 24),
         ],
