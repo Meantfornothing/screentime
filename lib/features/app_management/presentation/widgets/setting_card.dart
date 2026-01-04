@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_visuals.dart';
-// Custom Widgets (For now, defined locally until we move them to /widgets)
-// =================================================================
 
 /// The styled card container for individual settings.
 class SettingCard extends StatelessWidget {
@@ -13,14 +11,20 @@ class SettingCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100, // Light background
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD4AF98).withOpacity(0.5), width: 1.5),
+        // Use surface color defined for cards in app_visuals.dart
+        color: AppColors.surface, 
+        // Use the standardized card border radius (16.0)
+        borderRadius: AppShapes.cardBorder, 
+        border: Border.all(
+          // Use primary brand color with low opacity for a soft border
+          color: AppColors.primary.withOpacity(0.3), 
+          width: 1.0,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),

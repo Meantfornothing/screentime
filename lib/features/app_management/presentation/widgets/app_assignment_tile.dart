@@ -18,34 +18,27 @@ class AppAssignmentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // - Using functional colors from AppColors
-    Color chipColor = app.assignedCategoryName != null 
-        ? AppColors.success.withOpacity(0.1) 
-        : Colors.grey.shade200;
-        
-    Color textColor = app.assignedCategoryName != null 
-        ? AppColors.success 
-        : AppColors.textSecondary;
+    // 1. Get the dynamic color based on the category name
+    final String categoryName = app.assignedCategoryName ?? 'Uncategorized';
+    final Color categoryColor = AppColors.getCategoryColor(categoryName);
 
-    // Mapping colors for known categories
-    if (app.assignedCategoryName == 'Productivity') {
-      chipColor = AppColors.primary.withOpacity(0.1); 
-      textColor = AppColors.primaryVariant;
-    }
+    // 2. Define the styling based on the retrieved category color
+    final Color chipColor = categoryColor.withOpacity(0.12);
+    final Color textColor = categoryColor;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Container(
-        height: 50,
+        height: 56, // Increased slightly for better tap target
         decoration: BoxDecoration(
-          color: AppColors.background, // - Replaced Colors.white
-          borderRadius: AppShapes.cardBorder, // - Replaced BorderRadius.circular(12)
-          border: Border.all(color: AppColors.textSecondary.withOpacity(0.2)), //
+          color: AppColors.background,
+          borderRadius: AppShapes.cardBorder, 
+          border: Border.all(color: AppColors.textSecondary.withOpacity(0.1)), 
         ),
-        padding: const EdgeInsets.only(left: 15, right: 5),
+        padding: const EdgeInsets.only(left: 15, right: 8),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // App Icon
             if (app.iconBytes != null)
               Padding(
                 padding: const EdgeInsets.only(right: 12.0),
@@ -54,36 +47,44 @@ class AppAssignmentTile extends StatelessWidget {
             else
               const Padding(
                 padding: EdgeInsets.only(right: 12.0),
-                child: Icon(Icons.android, size: 32, color: AppColors.textSecondary), //
+                child: Icon(Icons.apps, size: 32, color: AppColors.textSecondary),
               ),
+            
+            // App Name
             Expanded(
               child: Text(
                 app.name,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 16, 
-                  color: AppColors.textPrimary, // - Replaced Colors.black87
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
             
+            // Dynamic Category Chip
             GestureDetector(
               onTap: () => _showCategorySelection(context),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: chipColor,
-                  borderRadius: BorderRadius.circular(20), // Pill shape preserved
+                  borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      app.assignedCategoryName ?? 'Uncategorized',
-                      style: TextStyle(fontSize: 14, color: textColor),
+                      categoryName,
+                      style: TextStyle(
+                        fontSize: 13, 
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.textSecondary),
+                    Icon(Icons.keyboard_arrow_down, size: 16, color: textColor),
                   ],
                 ),
               ),

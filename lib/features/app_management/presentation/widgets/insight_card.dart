@@ -14,32 +14,39 @@ class InsightCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        // Using your Primary Beige to Primary Variant for a subtle brand gradient
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryVariant],
+        // Use a subtle gradient from a low-opacity primary to the surface color
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withOpacity(0.3), // Subtle beige tint at top-left
+            AppColors.surface, // Fades to near-white/surface at bottom-right
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: AppShapes.cardBorder, 
+        borderRadius: AppShapes.cardBorder, // 16.0 radius
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.25),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            // Use a very soft, neutral shadow for depth
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
+        // Optional: Add a thin, transparent border for more definition
+        border: Border.all(color: AppColors.primary.withOpacity(0.1), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+              // Icon and text are now dark for contrast against the light background
+              Icon(Icons.auto_awesome, color: AppColors.textPrimary, size: 18),
               const SizedBox(width: 8),
               Text(
                 "DAILY INSIGHT",
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: AppColors.textPrimary.withOpacity(0.7),
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
@@ -51,7 +58,7 @@ class InsightCard extends StatelessWidget {
           Text(
             content,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.textPrimary, // Main content is dark
               fontSize: 20,
               fontWeight: FontWeight.bold,
               height: 1.3,
@@ -68,13 +75,15 @@ class InsightCard extends StatelessWidget {
                 );
               },
               style: TextButton.styleFrom(
-                // Using white with low opacity to let the brand beige peek through
-                backgroundColor: Colors.white.withOpacity(0.15),
-                foregroundColor: Colors.white,
+                // Button background is a very subtle primary tint
+                backgroundColor: AppColors.primary.withOpacity(0.1),
+                // Button text/icon are dark
+                foregroundColor: AppColors.textPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
+                  borderRadius: BorderRadius.circular(AppShapes.buttonRadius), // 12.0 radius
                 ),
+                elevation: 0, // Remove button shadow for a flatter look
               ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,

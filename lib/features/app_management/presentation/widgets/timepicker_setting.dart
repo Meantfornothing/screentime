@@ -6,14 +6,13 @@ class TimePickerSetting extends StatefulWidget {
   final String title;
   final String description;
   final TimeOfDay initialTime;
-  // NEW: Callback to notify parent of changes
   final ValueChanged<TimeOfDay>? onTimeChanged; 
 
   const TimePickerSetting({
     required this.title,
     required this.description,
     required this.initialTime,
-    this.onTimeChanged, // Add to constructor
+    this.onTimeChanged,
     super.key,
   });
 
@@ -30,7 +29,6 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
     _selectedTime = widget.initialTime;
   }
 
-  // Update internal state if parent passes a new initialTime (e.g. from Cubit)
   @override
   void didUpdateWidget(covariant TimePickerSetting oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -48,11 +46,11 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
       builder: (context, child) {
         return Theme(
           data: ThemeData.light().copyWith(
-            colorScheme: ColorScheme.light(
-              primary: const Color(0xFFD4AF98), 
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary, // Using brand beige
               onPrimary: Colors.white,
               surface: Colors.white,
-              onSurface: Colors.black87,
+              onSurface: AppColors.textPrimary, // Standardized primary text
             ),
           ),
           child: child!,
@@ -64,7 +62,6 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
       setState(() {
         _selectedTime = newTime;
       });
-      // NEW: Notify parent
       widget.onTimeChanged?.call(newTime);
     }
   }
@@ -81,12 +78,19 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
         children: [
           Text(
             widget.title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 18, 
+              fontWeight: FontWeight.w600, 
+              color: AppColors.textPrimary, // Theme primary text
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             widget.description,
-            style: const TextStyle(fontSize: 14, color: Colors.black54),
+            style: const TextStyle(
+              fontSize: 14, 
+              color: AppColors.textSecondary, // Theme secondary text
+            ),
           ),
           const SizedBox(height: 12),
           
@@ -95,23 +99,31 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
             children: [
               const Text(
                 'Time',
-                style: TextStyle(fontSize: 18, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 18, 
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               GestureDetector(
                 onTap: _pickTime, 
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade400),
+                    color: AppColors.background, // Pure white background
+                    borderRadius: BorderRadius.circular(AppShapes.buttonRadius), // 12.0 radius
+                    border: Border.all(color: AppColors.textSecondary.withOpacity(0.2)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         timePart,
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFD4AF98)),
+                        style: const TextStyle(
+                          fontSize: 24, 
+                          fontWeight: FontWeight.bold, 
+                          color: AppColors.primary, // Brand beige
+                        ),
                       ),
                       if (amPmPart != null) ...[
                         const SizedBox(width: 8),
@@ -142,10 +154,10 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFD4AF98) : Colors.white,
-            borderRadius: BorderRadius.circular(8),
+            color: isSelected ? AppColors.primary : AppColors.background,
+            borderRadius: BorderRadius.circular(6), // Slightly smaller for nested buttons
             border: Border.all(
-              color: isSelected ? const Color(0xFFD4AF98) : Colors.grey.shade400,
+              color: isSelected ? AppColors.primary : AppColors.textSecondary.withOpacity(0.2),
             ),
           ),
           child: Text(
@@ -153,7 +165,7 @@ class _TimePickerSettingState extends State<TimePickerSetting> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.white : Colors.black87,
+              color: isSelected ? Colors.white : AppColors.textSecondary,
             ),
           ),
         ),

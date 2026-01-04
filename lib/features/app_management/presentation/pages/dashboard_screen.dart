@@ -8,6 +8,7 @@ import 'preferences_screen.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core//services/background_service.dart';
 import 'dart:async';
+import '../../../../../core/theme/app_visuals.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -57,31 +58,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void dispose() {
     _notificationSubscription?.cancel();
     super.dispose();
-  }
-  /// Map categories to colors. Handles custom categories dynamically.
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Productivity':
-        return Colors.purple;
-      case 'Entertainment':
-        return Colors.orange;
-      case 'Neutral':
-        return Colors.blueGrey;
-      case 'Uncategorized':
-      case '':
-        return Colors.grey.shade400;
-      default:
-        final customColors = [
-          Colors.blue,
-          Colors.green,
-          Colors.teal,
-          Colors.indigo,
-          Colors.pink,
-          Colors.amber,
-          Colors.cyan,
-        ];
-        return customColors[category.hashCode.abs() % customColors.length];
-    }
   }
 
   @override
@@ -151,7 +127,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   RecommendationsCard(
                     content: state.recommendationMessage,
                     recommendedApps: state.recommendedApps,
-                    getCategoryColor: _getCategoryColor,
+                    getCategoryColor: AppColors.getCategoryColor,
                   ),
 
                   const SizedBox(height: 20),
