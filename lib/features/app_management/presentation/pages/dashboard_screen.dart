@@ -6,6 +6,8 @@ import '../widgets/insight_card.dart';
 import '../widgets/recommendations_card.dart';
 import 'preferences_screen.dart';
 import '../../../../core/services/notification_service.dart';
+import '../../../../core//services/background_service.dart';
+import 'dart:async';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -15,12 +17,47 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  @override
+  StreamSubscription? _notificationSubscription;
+
+@override
   void initState() {
     super.initState();
+    _setupNotificationHandling();
     context.read<DashboardCubit>().loadDashboardData();
   }
+  void _setupNotificationHandling() {
+    // 1. Listen for notification taps while the app is open (foreground/background)
+    _notificationSubscription = NotificationService.onTapStream.listen((payload) {
+      _handlePayload(payload);
+    });
 
+    // 2. Check for the payload that launched the app (terminated state)
+    NotificationService.getAppLaunchDetails().then((response) {
+      if (response?.payload != null) {
+        _handlePayload(response!.payload);
+      }
+    });
+  }
+
+  void _handlePayload(String? payload) {
+    if (payload == null) return;
+
+    // Standardize your payload parsing. 
+    // Your BackgroundService uses 'target_category:Entertainment'
+    String category = payload;
+    if (payload.startsWith('target_category:')) {
+      category = payload.replaceFirst('target_category:', '');
+    }
+
+    // Trigger the Cubit with the specific category filter
+    context.read<DashboardCubit>().loadDashboardData(categoryFilter: category);
+  }
+
+  @override
+  void dispose() {
+    _notificationSubscription?.cancel();
+    super.dispose();
+  }
   /// Map categories to colors. Handles custom categories dynamically.
   Color _getCategoryColor(String category) {
     switch (category) {

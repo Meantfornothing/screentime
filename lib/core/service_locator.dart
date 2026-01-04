@@ -24,12 +24,22 @@ import '../features/app_management/data/datasources/app_usage_local_data_source.
 
 final sl = GetIt.instance;
 
-Future<void> init() async{ 
-  // 1. Data Sources
+Future<void> init() async {
+  // 1. Register Adapters first
+  if (!Hive.isAdapterRegistered(0)) Hive.registerAdapter(AppCategoryEntityAdapter());
+  if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(InstalledAppAdapter());
+  if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(UserSettingsEntityAdapter());
+
+  // 2. Open Boxes (This MUST be awaited before they are used)
+  final categoryBox = await Hive.openBox<AppCategoryEntity>('categories');
+  final appBox = await Hive.openBox<InstalledApp>('installed_apps');
+  final settingsBox = await Hive.openBox<UserSettingsEntity>('settings');
+
+  // 3. Data Sources - Pass the opened boxes directly
   sl.registerLazySingleton<CategorizationLocalDataSource>(
     () => CategorizationLocalDataSourceImpl(
-      categoryBox: Hive.box<AppCategoryEntity>('categories'),
-      appBox: Hive.box<InstalledApp>('installed_apps'),
+      categoryBox: categoryBox,
+      appBox: appBox,
     ),
   );
 
@@ -41,7 +51,7 @@ Future<void> init() async{
     () => AppUsageDataSourceImpl(),
   );
 
-  // 2. Repositories
+  // 4. Repositories
   sl.registerLazySingleton<CategorizationRepository>(
     () => CategorizationRepositoryImpl(
       localDataSource: sl(), 
@@ -51,25 +61,13 @@ Future<void> init() async{
   );
 
   sl.registerLazySingleton<SettingsRepository>(
-    () => SettingsRepositoryImpl(
-      Hive.box<UserSettingsEntity>('settings'),
-    ),
+    () => SettingsRepositoryImpl(settingsBox),
   );
 
-
-  // 3. Cubits
-  sl.registerFactory(
-    () => CategorizationCubit(sl()),
-  );
-
-  sl.registerFactory(
-    () => SettingsCubit(sl()),
-  );
-
-  // NEW: Register Dashboard Cubit
-  sl.registerFactory(
-    () => DashboardCubit(sl()), // Injects CategorizationRepository
-  );
+  // 5. Cubits
+  sl.registerFactory(() => CategorizationCubit(sl()));
+  sl.registerFactory(() => SettingsCubit(sl()));
+  sl.registerFactory(() => DashboardCubit(sl()));
 
   print("Service Locator initialized successfully.");
 }
