@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_visuals.dart'; // - Updated import path
 import '../../domain/entities/entities.dart';
-
 
 class AppAssignmentTile extends StatelessWidget {
   final InstalledApp app;
   final Function(String categoryName) onAssignCategory;
-  final Function(String newCategoryName) onAddNewCategory; // New callback
+  final Function(String newCategoryName) onAddNewCategory;
   final List<AppCategoryEntity> availableCategories;
 
   const AppAssignmentTile({
@@ -18,31 +18,27 @@ class AppAssignmentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color chipColor = app.assignedCategoryName != null ? Colors.green.shade100 : Colors.grey.shade200;
-    Color textColor = app.assignedCategoryName != null ? Colors.green.shade800 : Colors.black54;
+    // 1. Get the dynamic color based on the category name
+    final String categoryName = app.assignedCategoryName ?? 'Uncategorized';
+    final Color categoryColor = AppColors.getCategoryColor(categoryName);
 
-    // Mapping colors for known categories (Optional visual enhancement)
-    if (app.assignedCategoryName == 'Productivity') {
-      chipColor = Colors.green.shade100; textColor = Colors.green.shade800;
-    } else if (app.assignedCategoryName == 'Entertainment') {
-      chipColor = Colors.red.shade100; textColor = Colors.red.shade800;
-    } else if (app.assignedCategoryName == 'Relaxation') {
-      chipColor = Colors.blue.shade100; textColor = Colors.blue.shade800;
-    }
+    // 2. Define the styling based on the retrieved category color
+    final Color chipColor = categoryColor.withOpacity(0.12);
+    final Color textColor = categoryColor;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Container(
-        height: 50,
+        height: 56, // Increased slightly for better tap target
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
+          color: AppColors.background,
+          borderRadius: AppShapes.cardBorder, 
+          border: Border.all(color: AppColors.textSecondary.withOpacity(0.1)), 
         ),
-        padding: const EdgeInsets.only(left: 15, right: 5),
+        padding: const EdgeInsets.only(left: 15, right: 8),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [// Add the icon here
+          children: [
+            // App Icon
             if (app.iconBytes != null)
               Padding(
                 padding: const EdgeInsets.only(right: 12.0),
@@ -51,32 +47,44 @@ class AppAssignmentTile extends StatelessWidget {
             else
               const Padding(
                 padding: EdgeInsets.only(right: 12.0),
-                child: Icon(Icons.android, size: 32, color: Colors.grey),
+                child: Icon(Icons.apps, size: 32, color: AppColors.textSecondary),
               ),
+            
+            // App Name
             Expanded(
               child: Text(
                 app.name,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                style: const TextStyle(
+                  fontSize: 16, 
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
             
+            // Dynamic Category Chip
             GestureDetector(
               onTap: () => _showCategorySelection(context),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: chipColor,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      app.assignedCategoryName ?? 'Uncategorized',
-                      style: TextStyle(fontSize: 14, color: textColor),
+                      categoryName,
+                      style: TextStyle(
+                        fontSize: 13, 
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.black54),
+                    Icon(Icons.keyboard_arrow_down, size: 16, color: textColor),
                   ],
                 ),
               ),
@@ -91,7 +99,7 @@ class AppAssignmentTile extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppShapes.cardRadius)), //
       ),
       builder: (BuildContext sheetContext) {
         return Padding(
@@ -106,28 +114,29 @@ class AppAssignmentTile extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               
-              // 1. "Add New" Option at the top
               ListTile(
                 leading: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                    color: Color(0xFFD4AF98), // Brown accent
+                    color: AppColors.primary, // - Replaced hex color
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.add, color: Colors.white, size: 20),
                 ),
                 title: const Text(
                   'Create New Category',
-                  style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFD4AF98)),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600, 
+                    color: AppColors.primary, //
+                  ),
                 ),
                 onTap: () {
-                  Navigator.pop(sheetContext); // Close sheet
-                  _showAddCategoryDialog(context); // Open dialog
+                  Navigator.pop(sheetContext);
+                  _showAddCategoryDialog(context);
                 },
               ),
               const Divider(),
 
-              // 2. Existing Categories
               Expanded(
                 child: ListView.builder(
                   shrinkWrap: true,
@@ -137,7 +146,7 @@ class AppAssignmentTile extends StatelessWidget {
                     return ListTile(
                       title: Text(category.name),
                       trailing: app.assignedCategoryName == category.name 
-                          ? const Icon(Icons.check, color: Colors.green) 
+                          ? const Icon(Icons.check, color: AppColors.success) //
                           : null,
                       onTap: () {
                         onAssignCategory(category.name);
@@ -154,7 +163,6 @@ class AppAssignmentTile extends StatelessWidget {
     );
   }
 
-  // Helper dialog to create a new category directly
   void _showAddCategoryDialog(BuildContext context) {
     final textController = TextEditingController();
     showDialog(
@@ -166,11 +174,16 @@ class AppAssignmentTile extends StatelessWidget {
             controller: textController,
             autofocus: true,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(hintText: 'Category Name'),
+            decoration: const InputDecoration(
+              hintText: 'Category Name',
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: AppColors.primary), //
+              ),
+            ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
               onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             ElevatedButton(

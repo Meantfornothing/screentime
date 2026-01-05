@@ -1,3 +1,6 @@
+// lib/core/services/notification_service.dart
+
+import 'dart:async'; // Required for StreamController
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -5,7 +8,10 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  // UPDATED: Added named parameters for callbacks
+  // A broadcast stream to allow multiple widgets to listen for notification taps
+  static final _onTapController = StreamController<String?>.broadcast();
+  static Stream<String?> get onTapStream => _onTapController.stream;
+
   static Future<void> initialize({
     void Function(NotificationResponse)? onNotificationResponse,
     void Function(NotificationResponse)? onBackgroundNotificationResponse,
@@ -25,12 +31,29 @@ class NotificationService {
       iOS: initializationSettingsDarwin,
     );
 
-    // UPDATED: Passing the callbacks to the plugin
     await _notificationsPlugin.initialize(
       initializationSettings,
-      onDidReceiveNotificationResponse: onNotificationResponse,
+      onDidReceiveNotificationResponse: (response) {
+        // Emit the payload to the stream
+        _onTapController.add(response.payload);
+        onNotificationResponse?.call(response);
+      },
       onDidReceiveBackgroundNotificationResponse: onBackgroundNotificationResponse,
     );
+    // ADD THIS BLOCK: Request Android 13+ permissions explicitly
+    final androidImplementation =
+      _notificationsPlugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidImplementation != null) {
+      await androidImplementation.requestNotificationsPermission();
+    }
+  }
+
+  /// Checks if the app was launched via a notification tap (Terminated state)
+  static Future<NotificationResponse?> getAppLaunchDetails() async {
+    final details = await _notificationsPlugin.getNotificationAppLaunchDetails();
+    return details?.notificationResponse;
   }
 
   static Future<void> showNotification({
@@ -39,6 +62,7 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
+    // ... (rest of your existing showNotification logic)
     final BigTextStyleInformation bigTextStyleInformation =
         BigTextStyleInformation(
       body,

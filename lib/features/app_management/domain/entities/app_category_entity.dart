@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
 
 @HiveType(typeId: 0) // typeId 0 is unique to this entity
-class AppCategoryEntity extends HiveObject with EquatableMixin {
+class AppCategoryEntity with EquatableMixin {
   @HiveField(0)
   final String id;
   

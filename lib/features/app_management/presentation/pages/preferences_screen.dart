@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/service_locator.dart';
 import '../../../../core/routes.dart';
+import '../../../../core/theme/app_visuals.dart';
 
 import '../cubit/settings_cubit.dart';
 import '../cubit/settings_state.dart';
@@ -32,12 +33,12 @@ class _PreferencesView extends StatelessWidget {
     ];
 
     return Scaffold(
-      // 1. Removed standard AppBar
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: BlocBuilder<SettingsCubit, SettingsState>(
           builder: (context, state) {
             if (state.status == SettingsStatus.loading) {
-              return const Center(child: CircularProgressIndicator(color: Color(0xFFD4AF98)));
+              return const Center(child: CircularProgressIndicator(color: AppColors.primary));
             }
 
             final currentGoal = state.settings.userGoal;
@@ -45,80 +46,74 @@ class _PreferencesView extends StatelessWidget {
             return ListView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               children: [
-                // Custom header with back button
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                      icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
                       onPressed: () => Navigator.pop(context),
                     ),
                     const SizedBox(width: 8),
                     const Text(
                       'My Preferences',
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                     ),
                   ],
                 ),
                 const SizedBox(height: 40),
-                
                 const Text(
                   'What is your main goal?',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 16),
-
                 SettingCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Select Goal', style: TextStyle(fontSize: 16, color: Colors.black54)),
+                      const Text('Select Goal', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         value: goals.contains(currentGoal) ? currentGoal : goals.first,
                         isExpanded: true,
+                        dropdownColor: AppColors.surface,
                         decoration: InputDecoration(
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          filled: true,
+                          fillColor: AppColors.background,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
+                            borderSide: BorderSide(color: AppColors.textSecondary.withOpacity(0.2)),
+                          ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         ),
                         items: goals.map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
-                            child: Text(value),
+                            child: Text(value, style: const TextStyle(color: AppColors.textPrimary)),
                           );
                         }).toList(),
                         onChanged: (newValue) {
                           if (newValue != null) {
                             context.read<SettingsCubit>().updateUserGoal(newValue);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Goal set to: $newValue')),
-                            );
                           }
                         },
                       ),
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 40),
-                const Text('Quick Access', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('Quick Access', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
                 const SizedBox(height: 16),
-
                 _NavigationTile(
                   icon: Icons.category,
                   title: 'Categorize Apps',
                   subtitle: 'Manage your app categories',
-                  onTap: () {
-                     Navigator.pushNamed(context, AppRoutes.categorization);
-                  },
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.categorization),
                 ),
                 const SizedBox(height: 12),
                 _NavigationTile(
                   icon: Icons.tune,
                   title: 'Nudge Settings',
                   subtitle: 'Adjust frequency and intensity',
-                  onTap: () {
-                     Navigator.pushNamed(context, AppRoutes.settings);
-                  },
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.settings),
                 ),
               ],
             );
@@ -146,38 +141,29 @@ class _NavigationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2)),
-          ],
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
+          border: Border.all(color: AppColors.textSecondary.withOpacity(0.1)),
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD4AF98).withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: const Color(0xFFD4AF98)),
-            ),
+            // Using the new centralized AppIconBox from app_visuals.dart
+            AppIconBox(icon: icon),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                  Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+            const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textSecondary),
           ],
         ),
       ),

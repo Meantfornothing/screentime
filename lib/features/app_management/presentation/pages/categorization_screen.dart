@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/service_locator.dart';
+import '../../../../core/theme/app_visuals.dart';
 
-// Ensure these imports are correct and the files exist
 import '../cubit/categorization_cubit.dart';
 import '../cubit/categorization_state.dart';
 import '../widgets/widgets.dart';
@@ -13,7 +13,6 @@ class CategorizationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      // sl<CategorizationCubit>() must be registered in your service_locator.dart
       create: (context) => sl<CategorizationCubit>()..loadData(),
       child: const _CategorizationView(),
     );
@@ -41,15 +40,23 @@ class _CategorizationViewState extends State<_CategorizationView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background, // Standard white background
       body: SafeArea(
         child: BlocBuilder<CategorizationCubit, CategorizationState>(
           builder: (context, state) {
             if (state.status == CategorizationStatus.loading) {
-              return const Center(child: CircularProgressIndicator(color: Color(0xFFD4AF98)));
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primary), // Brand beige
+              );
             }
 
             if (state.status == CategorizationStatus.failure) {
-              return Center(child: Text('Error: ${state.errorMessage}'));
+              return Center(
+                child: Text(
+                  'Error: ${state.errorMessage}',
+                  style: const TextStyle(color: AppColors.error), // Brand error red
+                ),
+              );
             }
 
             final filteredApps = state.apps.where((app) {
@@ -72,11 +79,23 @@ class _CategorizationViewState extends State<_CategorizationView> {
                   padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                   child: Row(
                     children: [
-                      IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
-                      const SizedBox(width: 8),
-                      const Expanded(child: Text('Categorization', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold))),
                       IconButton(
-                        icon: const Icon(Icons.refresh, color: Color(0xFFD4AF98)),
+                        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Categorization',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary, // #1A1A1A
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh, color: AppColors.primary),
                         onPressed: () => context.read<CategorizationCubit>().loadData(forceRefresh: true),
                       ),
                     ],
@@ -89,17 +108,26 @@ class _CategorizationViewState extends State<_CategorizationView> {
                     onChanged: (value) => setState(() => _searchQuery = value),
                     decoration: InputDecoration(
                       hintText: 'Search apps...',
-                      prefixIcon: const Icon(Icons.search, color: Color(0xFFD4AF98)),
+                      hintStyle: const TextStyle(color: AppColors.textSecondary),
+                      prefixIcon: const Icon(Icons.search, color: AppColors.primary),
                       filled: true,
-                      fillColor: Colors.grey.shade100,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                      fillColor: AppColors.surface, // Very light grey
+                      border: OutlineInputBorder(
+                        borderRadius: AppShapes.cardBorder, // 16.0 radius
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                 ),
                 _buildFilterRow(state.categories),
                 Expanded(
                   child: filteredApps.isEmpty 
-                    ? const Center(child: Text('No apps found'))
+                    ? const Center(
+                        child: Text(
+                          'No apps found',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      )
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         itemCount: filteredApps.length,
@@ -121,11 +149,6 @@ class _CategorizationViewState extends State<_CategorizationView> {
             );
           },
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddCategoryDialog(context),
-        backgroundColor: const Color(0xFFD4AF98),
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -154,13 +177,24 @@ class _CategorizationViewState extends State<_CategorizationView> {
   Widget _buildFilterChip(String label, String? value) {
     final isSelected = _selectedCategoryFilter == value;
     return FilterChip(
-      label: Text(label),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? AppColors.primary : AppColors.textSecondary,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
       selected: isSelected,
       onSelected: (_) => setState(() => _selectedCategoryFilter = value),
-      selectedColor: const Color(0xFFD4AF98).withOpacity(0.3),
-      checkmarkColor: const Color(0xFFD4AF98),
-      backgroundColor: Colors.grey.shade100,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      selectedColor: AppColors.primary.withOpacity(0.2), // Subtle beige tint
+      checkmarkColor: AppColors.primary,
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppShapes.buttonRadius), // 12.0 radius
+      ),
+      side: BorderSide(
+        color: isSelected ? AppColors.primary : Colors.transparent,
+      ),
     );
   }
 
@@ -169,10 +203,22 @@ class _CategorizationViewState extends State<_CategorizationView> {
     showDialog(
       context: context,
       builder: (innerContext) => AlertDialog(
-        title: const Text('Add Category'),
-        content: TextField(controller: controller, decoration: const InputDecoration(hintText: 'Category Name'), autofocus: true),
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: AppShapes.cardBorder),
+        title: const Text('Add Category', style: TextStyle(color: AppColors.textPrimary)),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Category Name',
+            hintStyle: TextStyle(color: AppColors.textSecondary),
+          ),
+          autofocus: true,
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(innerContext), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(innerContext),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+          ),
           ElevatedButton(
             onPressed: () {
               if (controller.text.isNotEmpty) {
@@ -180,7 +226,12 @@ class _CategorizationViewState extends State<_CategorizationView> {
                 Navigator.pop(innerContext);
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD4AF98)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
+              ),
+            ),
             child: const Text('Add', style: TextStyle(color: Colors.white)),
           ),
         ],

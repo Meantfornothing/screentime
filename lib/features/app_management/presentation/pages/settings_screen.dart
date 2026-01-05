@@ -1,6 +1,9 @@
+// meantfornothing/screentime/screentime-new-crazy-changes/lib/features/app_management/presentation/pages/settings_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/service_locator.dart';
+import '../../../../core/theme/app_visuals.dart'; //
 
 // Import Cubit and State
 import '../cubit/settings_cubit.dart';
@@ -31,13 +34,17 @@ class _SettingsView extends StatelessWidget {
         
         if (state.status == SettingsStatus.loading) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator(color: Color(0xFFD4AF98))),
+            backgroundColor: AppColors.background, //
+            body: Center(
+              child: CircularProgressIndicator(color: AppColors.primary), //
+            ),
           );
         }
 
         final settings = state.settings;
 
         return Scaffold(
+          backgroundColor: AppColors.background, //
           body: SafeArea(
             child: Column(
               children: [
@@ -45,11 +52,10 @@ class _SettingsView extends StatelessWidget {
                   child: ListView(
                     padding: const EdgeInsets.all(24.0),
                     children: [
-                      // 2. Added a manual back button and header area
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary), //
                             onPressed: () => Navigator.pop(context),
                           ),
                           const SizedBox(width: 8),
@@ -58,7 +64,7 @@ class _SettingsView extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: AppColors.textPrimary, //
                             ),
                           ),
                         ],
@@ -124,7 +130,7 @@ class _SettingsView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.background, //
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.05),
@@ -144,16 +150,20 @@ class _SettingsView extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD4AF98),
+                      backgroundColor: AppColors.primary, //
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: AppShapes.cardBorder, //
                       ),
                       elevation: 2,
                     ),
                     child: const Text(
                       'Save Changes',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: TextStyle(
+                        fontSize: 18, 
+                        fontWeight: FontWeight.bold, 
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),

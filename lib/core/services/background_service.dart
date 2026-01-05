@@ -5,8 +5,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'notification_service.dart';
 
-import '../../features/app_management/domain/entities/user_settings_entity.dart';
-import '../../features/app_management/domain/entities/installed_app_entity.dart';
+import 'package:screentime/features/app_management/domain/entities/user_settings_entity.dart';
+import 'package:screentime/features/app_management/domain/entities/installed_app_entity.dart';
 
 const String usageCheckTask = "usageCheckTask";
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_visuals.dart';
 // Replicates the list item for an existing category (Top of the screen).
 class CategoryListTile extends StatelessWidget {
   final String name;
@@ -11,8 +12,8 @@ class CategoryListTile extends StatelessWidget {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surface,
+        borderRadius: AppShapes.cardBorder,
         border: Border.all(color: Colors.grey.shade300),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 15),
