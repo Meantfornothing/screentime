@@ -1,4 +1,4 @@
-// meantfornothing/screentime/screentime-new-crazy-changes/lib/features/app_management/presentation/pages/dashboard_screen.dart
+// lib/features/app_management/presentation/pages/dashboard_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -58,11 +58,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background, // Standard white background
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: BlocBuilder<DashboardCubit, DashboardState>(
           builder: (context, state) {
-            if (state.status == DashboardStatus.loading) {
+            if (state.status == DashboardStatus.loading && !state.isGeneratingImage) {
               return const Center(child: CircularProgressIndicator(color: AppColors.primary));
             }
 
@@ -73,6 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 children: [
+                  // --- HEADER ---
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
@@ -112,6 +113,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 25),
+
+                  // --- AI VISUALIZATION (ARTWORK) ---
+                  _buildAiArtwork(state),
+
+                  const SizedBox(height: 10),
                   InsightCard(content: state.insightMessage),
                   const SizedBox(height: 10),
                   RecommendationsCard(
@@ -120,6 +126,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     getCategoryColor: AppColors.getCategoryColor,
                   ),
                   const SizedBox(height: 20),
+                  
+                  // --- TEST NOTIFICATION BUTTON ---
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: OutlinedButton.icon(
@@ -148,6 +156,80 @@ class _DashboardScreenState extends State<DashboardScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildAiArtwork(DashboardState state) {
+    return Container(
+      height: 280,
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppShapes.cardBorder,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          // The Generated Image
+          if (state.aiImageUrl != null)
+            Positioned.fill(
+              child: Image.network(
+                state.aiImageUrl!,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                },
+                errorBuilder: (context, error, stackTrace) => const Center(
+                  child: Icon(Icons.broken_image, color: AppColors.textSecondary, size: 40),
+                ),
+              ),
+            ),
+          
+          // Loading Overlay for AI Generation
+          if (state.isGeneratingImage)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: Colors.white),
+                    SizedBox(height: 12),
+                    Text(
+                      "AI is painting your day...",
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          
+          // Placeholder when no data/image exists
+          if (state.aiImageUrl == null && !state.isGeneratingImage)
+            const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.auto_awesome, color: AppColors.primary, size: 48),
+                  SizedBox(height: 12),
+                  Text(
+                    "Categorize apps to see your daily art",
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

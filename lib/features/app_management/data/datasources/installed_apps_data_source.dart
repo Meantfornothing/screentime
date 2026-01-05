@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import '../../domain/entities/installed_app_entity.dart';
-import 'dart:typed_data';
 
 abstract class InstalledAppsDataSource {
   Future<List<InstalledApp>> getInstalledAppsFromOS();
