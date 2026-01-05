@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/categorization_repository_interface.dart';
 import '../../domain/entities/installed_app_entity.dart';
+import '../../../../core/services/gemini_service.dart'; // Importera din nya tjänst
 import 'dashboard_state.dart';
 import 'dart:math';
 
@@ -9,33 +10,28 @@ class DashboardCubit extends Cubit<DashboardState> {
 
   DashboardCubit(this.repository) : super(const DashboardState());
 
-  /// Loads dashboard data.
-  /// [categoryFilter] can be passed manually (e.g. from a notification).
-  /// If null, the logic dynamically picks a "Swap" category from the user's settings.
   Future<void> loadDashboardData({String? categoryFilter}) async {
-    // Start by showing the loading state
     emit(state.copyWith(status: DashboardStatus.loading));
     
     try {
-      // 1. Fetch apps and user categories from the repository
-      // This includes the "Hydration" step where icons are attached live
+      // 1. Hämta appar och kategorier
       final apps = await repository.getInstalledApps();
       final userCategories = await repository.getCategories();
 
-      // 2. Calculate Total Screen Time Usage
+      // 2. Beräkna total skärmtid
       Duration totalUsage = Duration.zero;
       for (var app in apps) {
         totalUsage += app.usageDuration;
       }
 
-      // 3. Aggregate Usage by Category
+      // 3. Aggregera användning per kategori
       final Map<String, Duration> categoryUsage = {};
       for (var app in apps) {
         final category = app.assignedCategoryName ?? 'Uncategorized';
         categoryUsage[category] = (categoryUsage[category] ?? Duration.zero) + app.usageDuration;
       }
 
-      // 4. Identify the Top-Used Category
+      // 4. Identifiera toppkategorin
       String topCategory = 'None';
       Duration topDuration = Duration.zero;
       categoryUsage.forEach((key, value) {
@@ -45,7 +41,7 @@ class DashboardCubit extends Cubit<DashboardState> {
         }
       });
 
-      // 5. Build the Dynamic Insight Message
+      // 5. Skapa insiktsmeddelande
       String insight = "You've used your phone for ${totalUsage.inMinutes}m today.";
       if (topCategory != 'None' && topDuration.inMinutes > 0) {
         insight += " Most time spent in $topCategory (${topDuration.inMinutes}m).";
@@ -53,12 +49,11 @@ class DashboardCubit extends Cubit<DashboardState> {
         insight = "No usage data yet. Categorize apps to see detailed insights!";
       }
 
-      // 6. Recommendation Logic (Dynamic Swap)
+      // 6. Rekommendationslogik (Swap)
       List<InstalledApp> recommended = [];
       String recMessage = "";
       String? targetCategory = categoryFilter;
 
-      // If no specific filter is provided, pick a category that is NOT being overused
       if (targetCategory == null && userCategories.isNotEmpty) {
         final otherCategories = userCategories
             .map((e) => e.name)
@@ -66,7 +61,6 @@ class DashboardCubit extends Cubit<DashboardState> {
             .toList();
         
         if (otherCategories.isNotEmpty) {
-          // Pick a random alternative category from the user's own list
           targetCategory = otherCategories[Random().nextInt(otherCategories.length)];
         }
       }
@@ -78,7 +72,6 @@ class DashboardCubit extends Cubit<DashboardState> {
         }
       }
 
-      // Fallback: If no proactive recommendation is found, show the user's most used apps
       if (recommended.isEmpty) {
         final sortedAppsByUsage = List<InstalledApp>.from(apps);
         sortedAppsByUsage.sort((a, b) => b.usageDuration.compareTo(a.usageDuration));
@@ -86,23 +79,44 @@ class DashboardCubit extends Cubit<DashboardState> {
         recMessage = "Your most used apps today:";
       }
 
-      // 7. Emit success state with all populated data
+      // --- NYTT: BILDGENERERING BASERAT PÅ PROCENT ---
+      String? aiImageUrl = state.aiImageUrl;
+      final totalMinutes = totalUsage.inMinutes;
+
+      if (totalMinutes > 0) {
+        emit(state.copyWith(isGeneratingImage: true));
+
+        // Beräkna procentuell fördelning för Gemini
+        final Map<String, int> percentages = {};
+        categoryUsage.forEach((cat, duration) {
+          percentages[cat] = ((duration.inMinutes / totalMinutes) * 100).round();
+        });
+
+        // Generera bild-URL via Gemini och Pollinations
+        aiImageUrl = await GeminiService.generateVisualPrompt(
+          categoryPercentages: percentages,
+        );
+      }
+
+      // 7. Emit success state med den genererade bilden
       emit(state.copyWith(
         status: DashboardStatus.success,
         userName: 'User', 
         totalScreenTime: totalUsage,
         mostUsedCategory: topCategory,
         recommendedApps: recommended,
-        allApps: apps, // Required for the Detailed Usage screen
+        allApps: apps,
         insightMessage: insight,
         recommendationMessage: recMessage,
+        aiImageUrl: aiImageUrl,
+        isGeneratingImage: false,
       ));
 
     } catch (e) {
-      // Handle failures gracefully
       emit(state.copyWith(
         status: DashboardStatus.failure,
-        insightMessage: "Error loading data: ${e.toString()}"
+        insightMessage: "Error loading data: ${e.toString()}",
+        isGeneratingImage: false,
       ));
     }
   }

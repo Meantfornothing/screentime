@@ -9,9 +9,13 @@ class DashboardState extends Equatable {
   final Duration totalScreenTime;
   final String mostUsedCategory;
   final List<InstalledApp> recommendedApps;
-  final List<InstalledApp> allApps; // Ensure this field exists
+  final List<InstalledApp> allApps;
   final String insightMessage;
   final String recommendationMessage;
+  
+  // Nya fält för AI-genererad visualisering
+  final String? aiImageUrl;
+  final bool isGeneratingImage;
 
   const DashboardState({
     this.status = DashboardStatus.initial,
@@ -22,6 +26,8 @@ class DashboardState extends Equatable {
     this.allApps = const [],
     this.insightMessage = '',
     this.recommendationMessage = '',
+    this.aiImageUrl,
+    this.isGeneratingImage = false,
   });
 
   DashboardState copyWith({
@@ -33,6 +39,8 @@ class DashboardState extends Equatable {
     List<InstalledApp>? allApps,
     String? insightMessage,
     String? recommendationMessage,
+    String? aiImageUrl,
+    bool? isGeneratingImage,
   }) {
     return DashboardState(
       status: status ?? this.status,
@@ -43,6 +51,8 @@ class DashboardState extends Equatable {
       allApps: allApps ?? this.allApps,
       insightMessage: insightMessage ?? this.insightMessage,
       recommendationMessage: recommendationMessage ?? this.recommendationMessage,
+      aiImageUrl: aiImageUrl ?? this.aiImageUrl,
+      isGeneratingImage: isGeneratingImage ?? this.isGeneratingImage,
     );
   }
 
@@ -55,6 +65,9 @@ class DashboardState extends Equatable {
         recommendedApps,
         allApps,
         insightMessage,
-        recommendationMessage
+        recommendationMessage,
+        aiImageUrl,
+        isGeneratingImage,
       ];
 }
+/// och `isGeneratingImage` i `props` säkerställer att UI:t reagerar korrekt när bildens status ändras.

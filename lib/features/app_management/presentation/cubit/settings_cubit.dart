@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/settings_repository_interface.dart';
-import '../../domain/entities/user_settings_entity.dart';
 import 'settings_state.dart';
 
 class SettingsCubit extends Cubit<SettingsState> {
