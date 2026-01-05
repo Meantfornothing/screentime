@@ -54,3 +54,29 @@ class AppShapes {
   static const double buttonRadius = 12.0;
   static const BorderRadius cardBorder = BorderRadius.all(Radius.circular(cardRadius));
 }
+/// Specialized box for settings and navigation icons.
+/// This is NOT intended for app icons from the phone.
+class AppIconBox extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final double size;
+
+  const AppIconBox({
+    required this.icon,
+    this.color = AppColors.primary,
+    this.size = 22.0,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: color, size: size),
+    );
+  }
+}
