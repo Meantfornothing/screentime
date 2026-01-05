@@ -16,40 +16,53 @@ class CategorizationRepositoryImpl implements CategorizationRepository {
     required this.appUsageDataSource,
   });
 
-@override
-Future<List<InstalledApp>> getInstalledApps({bool forceRefresh = false}) async {
-  // 1. Get metadata (PackageNames/Categories) from Hive
-  List<InstalledApp> cachedApps = await localDataSource.getCachedInstalledApps();
-  
-  // 2. Always fetch fresh icons from the OS
-  // (MethodChannel is fast enough for this)
-  final osApps = await installedAppsDataSource.getInstalledAppsFromOS();
+  @override
+  Future<List<InstalledApp>> getInstalledApps({bool forceRefresh = false}) async {
+    // 1. Get metadata (PackageNames/Categories) from the local source (Hive or Mock)
+    List<InstalledApp> cachedApps = await localDataSource.getCachedInstalledApps();
+    
+    // 2. Fetch fresh visual data (Icons/Names) from the OS (or Mock OS)
+    // Wrapped in a try-catch to prevent asset loading errors in mock mode from crashing the app
+    List<InstalledApp> osApps;
+    try {
+      osApps = await installedAppsDataSource.getInstalledAppsFromOS();
+    } catch (e) {
+      osApps = [];
+      print("Warning: Could not fetch OS apps (possibly mock asset mismatch): $e");
+    }
 
-  if (cachedApps.isEmpty || forceRefresh) {
-    await localDataSource.cacheInstalledApps(osApps);
-    cachedApps = osApps;
+    // 3. Handle initial population or forced refresh (mostly for real device mode)
+    if (cachedApps.isEmpty || forceRefresh) {
+      if (osApps.isNotEmpty) {
+        await localDataSource.cacheInstalledApps(osApps);
+        cachedApps = osApps;
+      }
+    }
+
+    // 4. DEFENSIVE MERGE: Hydrate icons into the cached list
+    // This logic ensures that package names match correctly between your mock files.
+    final List<InstalledApp> appsWithIcons = cachedApps.map((cachedApp) {
+      // Find the corresponding app from the OS fetch to get its icon bytes.
+      // We use a safe lookup to avoid calling .first on an empty list.
+      final InstalledApp? osMatch = osApps.cast<InstalledApp?>().firstWhere(
+        (os) => os?.packageName == cachedApp.packageName,
+        orElse: () => null,
+      );
+
+      // Return cached app with the icon. If no match is found, preserve the cached icon.
+      return cachedApp.copyWith(
+        iconBytes: osMatch?.iconBytes ?? cachedApp.iconBytes,
+      );
+    }).toList();
+
+    // 5. Attach usage duration from the usage data source (Real or Mock)
+    final Map<String, Duration> usageMap = await appUsageDataSource.getDailyUsage();
+    
+    return appsWithIcons.map((app) {
+      final usage = usageMap[app.packageName] ?? Duration.zero;
+      return app.copyWith(usageDuration: usage);
+    }).toList();
   }
-
-  // 3. THE FIX: Merge (Hydrate) the icons into your cached list
-  final List<InstalledApp> appsWithIcons = cachedApps.map((cachedApp) {
-    // Find the corresponding app from the OS fetch to get its icon
-    final osApp = osApps.firstWhere(
-      (os) => os.packageName == cachedApp.packageName,
-      orElse: () => osApps.first,
-    );
-
-    return cachedApp.copyWith(
-      iconBytes: osApp.iconBytes, // Attach the fresh icon bytes here
-    );
-  }).toList();
-
-  // 4. Attach usage duration and return
-  final usageMap = await appUsageDataSource.getDailyUsage();
-  return appsWithIcons.map((app) {
-    final usage = usageMap[app.packageName] ?? Duration.zero;
-    return app.copyWith(usageDuration: usage);
-  }).toList();
-}
 
   @override
   Future<List<AppCategoryEntity>> getCategories() async {
@@ -58,7 +71,6 @@ Future<List<InstalledApp>> getInstalledApps({bool forceRefresh = false}) async {
 
   @override
   Future<void> addCategory(AppCategoryEntity category) async {
-    // FIX: Passing the entity directly
     await localDataSource.addCategory(category);
   }
 
