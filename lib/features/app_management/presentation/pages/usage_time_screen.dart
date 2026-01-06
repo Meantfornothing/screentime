@@ -37,7 +37,7 @@ class UsageTimeScreen extends StatelessWidget {
 
           final Map<String, Duration> categoryTotals = {};
           for (var app in displayApps) {
-            final cat = app.assignedCategoryName ?? 'Uncategorized';
+            final cat = app.assignedCategoryName ?? 'Neutral';
             categoryTotals[cat] = (categoryTotals[cat] ?? Duration.zero) + app.usageDuration;
           }
 
@@ -83,7 +83,7 @@ class UsageTimeScreen extends StatelessWidget {
                     appName: app.name,
                     duration: app.usageDuration,
                     iconBytes: app.iconBytes,
-                    categoryName: app.assignedCategoryName ?? 'Uncategorized',
+                    categoryName: app.assignedCategoryName ?? 'Neutral',
                   )),
             ],
           );
