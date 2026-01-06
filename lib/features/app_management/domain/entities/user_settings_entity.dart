@@ -1,25 +1,32 @@
+// lib/features/app_management/domain/entities/user_settings_entity.dart
+
 import 'package:hive/hive.dart';
 
 @HiveType(typeId: 2) 
 class UserSettingsEntity extends HiveObject {
-  @HiveField(0)
-  final double breakReminderFrequency; 
+  // Descriptive Goal Constants
+  static const String goalWorktool = 'Use my phone as a worktool, not a distraction';
+  static const String goalProductivePrecedence = 'Let productive apps take more place than other apps';
+  static const String goalSocial = 'Use my phone to strengthen relations with others';
+  static const String goalEntertainment = 'Use my phone as an entertainment device';
+  static const String goalRelaxingContent = 'Consume content I find relaxing';
+  static const String goalReduceStress = 'Use my phone to reduce stress';
 
-  @HiveField(1)
-  final int dailyScreenTimeGoalMinutes; 
+  static const List<String> allGoals = [
+    goalWorktool,
+    goalProductivePrecedence,
+    goalSocial,
+    goalEntertainment,
+    goalRelaxingContent,
+    goalReduceStress,
+  ];
 
-  @HiveField(2)
-  final double nudgeIntensity; 
-
-  @HiveField(3)
-  final int bedtimeHour; 
-
-  @HiveField(4)
-  final int bedtimeMinute;
-
-  // NEW: User's primary goal
-  @HiveField(5)
-  final String userGoal; 
+  @HiveField(0) final double breakReminderFrequency; 
+  @HiveField(1) final int dailyScreenTimeGoalMinutes; 
+  @HiveField(2) final double nudgeIntensity; 
+  @HiveField(3) final int bedtimeHour; 
+  @HiveField(4) final int bedtimeMinute;
+  @HiveField(5) final String userGoal; 
 
   UserSettingsEntity({
     this.breakReminderFrequency = 0.5,
@@ -27,7 +34,7 @@ class UserSettingsEntity extends HiveObject {
     this.nudgeIntensity = 0.5,
     this.bedtimeHour = 23,
     this.bedtimeMinute = 0,
-    this.userGoal = 'Reduce Screen Time', // Default
+    this.userGoal = goalWorktool, 
   });
 
   UserSettingsEntity copyWith({
@@ -49,6 +56,7 @@ class UserSettingsEntity extends HiveObject {
   }
 }
 
+// Manual Adapter Implementation - Ensure this is outside the class
 class UserSettingsEntityAdapter extends TypeAdapter<UserSettingsEntity> {
   @override
   final int typeId = 2;
@@ -65,25 +73,19 @@ class UserSettingsEntityAdapter extends TypeAdapter<UserSettingsEntity> {
       nudgeIntensity: fields[2] as double,
       bedtimeHour: fields[3] as int,
       bedtimeMinute: fields[4] as int,
-      userGoal: fields[5] as String? ?? 'Reduce Screen Time', // Handle missing field for existing data
+      userGoal: fields[5] as String? ?? UserSettingsEntity.goalWorktool,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserSettingsEntity obj) {
     writer
-      ..writeByte(6) // Update count
-      ..writeByte(0)
-      ..write(obj.breakReminderFrequency)
-      ..writeByte(1)
-      ..write(obj.dailyScreenTimeGoalMinutes)
-      ..writeByte(2)
-      ..write(obj.nudgeIntensity)
-      ..writeByte(3)
-      ..write(obj.bedtimeHour)
-      ..writeByte(4)
-      ..write(obj.bedtimeMinute)
-      ..writeByte(5) // New field
-      ..write(obj.userGoal);
+      ..writeByte(6)
+      ..writeByte(0)..write(obj.breakReminderFrequency)
+      ..writeByte(1)..write(obj.dailyScreenTimeGoalMinutes)
+      ..writeByte(2)..write(obj.nudgeIntensity)
+      ..writeByte(3)..write(obj.bedtimeHour)
+      ..writeByte(4)..write(obj.bedtimeMinute)
+      ..writeByte(5)..write(obj.userGoal);
   }
 }

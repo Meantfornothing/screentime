@@ -1,8 +1,11 @@
+// lib/features/app_management/presentation/pages/preferences_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/service_locator.dart';
 import '../../../../core/routes.dart';
 import '../../../../core/theme/app_visuals.dart';
+import '../../domain/entities/user_settings_entity.dart'; // Import added
 
 import '../cubit/settings_cubit.dart';
 import '../cubit/settings_state.dart';
@@ -25,12 +28,7 @@ class _PreferencesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> goals = [
-      'Reduce Screen Time',
-      'Improve Sleep',
-      'Increase Focus',
-      'Digital Detox',
-    ];
+    // Removed local goal list - now using UserSettingsEntity.allGoals
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -46,6 +44,7 @@ class _PreferencesView extends StatelessWidget {
             return ListView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               children: [
+                // --- HEADER ---
                 Row(
                   children: [
                     IconButton(
@@ -60,6 +59,8 @@ class _PreferencesView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 40),
+
+                // --- GOAL SELECTION ---
                 const Text(
                   'What is your main goal?',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
@@ -69,11 +70,14 @@ class _PreferencesView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Select Goal', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+                      const Text('Select Goal', style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: goals.contains(currentGoal) ? currentGoal : goals.first,
-                        isExpanded: true,
+                        // Handle potential legacy values from Hive
+                        value: UserSettingsEntity.allGoals.contains(currentGoal) 
+                            ? currentGoal 
+                            : UserSettingsEntity.allGoals.first,
+                        isExpanded: true, // Crucial for long text
                         dropdownColor: AppColors.surface,
                         decoration: InputDecoration(
                           filled: true,
@@ -82,12 +86,16 @@ class _PreferencesView extends StatelessWidget {
                             borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
                             borderSide: BorderSide(color: AppColors.textSecondary.withOpacity(0.2)),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         ),
-                        items: goals.map((String value) {
+                        items: UserSettingsEntity.allGoals.map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
-                            child: Text(value, style: const TextStyle(color: AppColors.textPrimary)),
+                            child: Text(
+                              value, 
+                              style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                              overflow: TextOverflow.visible, // Allow multiline in dropdown
+                            ),
                           );
                         }).toList(),
                         onChanged: (newValue) {
@@ -99,8 +107,14 @@ class _PreferencesView extends StatelessWidget {
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 40),
-                const Text('Quick Access', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                
+                // --- QUICK ACCESS SECTION ---
+                const Text(
+                  'Quick Access', 
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)
+                ),
                 const SizedBox(height: 16),
                 _NavigationTile(
                   icon: Icons.category,
@@ -151,7 +165,6 @@ class _NavigationTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Using the new centralized AppIconBox from app_visuals.dart
             AppIconBox(icon: icon),
             const SizedBox(width: 16),
             Expanded(

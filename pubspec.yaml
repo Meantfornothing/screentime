@@ -20,6 +20,7 @@ dependencies:
   external_app_launcher: ^4.0.3
   flutter_dotenv: ^5.1.0
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
