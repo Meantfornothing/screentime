@@ -78,7 +78,7 @@ class DashboardCubit extends Cubit<DashboardState> {
 
       emit(state.copyWith(
         status: DashboardStatus.success,
-        userName: 'User', 
+        userName: 'Maria', 
         totalScreenTime: totalUsage,
         mostUsedCategory: topCategory,
         recommendedApps: recommended,

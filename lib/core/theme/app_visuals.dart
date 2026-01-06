@@ -10,11 +10,11 @@ class AppColors {
   static const Color error = Color(0xFFBA1A1A);
   static const Color success = Color(0xFF2E7D32);
   
-  static const Color productivity = Color(0xFF2E7D32);
-  static const Color entertainment = Color(0xFFBA1A1A);
-  static const Color social = Color(0xFF1976D2);
-  static const Color relaxation = Color(0xFF00BCD4);
-  static const Color neutral = Color(0xFF607D8B);
+  static const Color productivity = Color.fromARGB(255, 35, 17, 235);
+  static const Color entertainment = Color.fromARGB(255, 230, 116, 10);
+  static const Color social = Color.fromARGB(255, 225, 229, 34);
+  static const Color relaxation = Color.fromARGB(255, 175, 15, 223);
+  static const Color neutral = Color.fromARGB(255, 133, 132, 133);
 
   static Color getCategoryColor(String category) {
     switch (category) {
@@ -22,8 +22,8 @@ class AppColors {
       case 'Entertainment': return entertainment;
       case 'Social': return social;
       case 'Relaxation': return relaxation;
-      case 'Neutral': return neutral;
-      default: return neutral;
+      case 'Neutral': return const Color.fromARGB(255, 133, 132, 133);
+      default: return const Color.fromARGB(255, 133, 132, 133);
     }
   }
 }

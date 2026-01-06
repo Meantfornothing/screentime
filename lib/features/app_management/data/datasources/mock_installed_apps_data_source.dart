@@ -7,29 +7,23 @@ import 'installed_apps_data_source.dart';
 
 class MockInstalledAppsDataSourceImpl implements InstalledAppsDataSource {
   
-  // Helper för att ladda mock-ikoner från assets
-  Future<Uint8List> _getAssetBytes(String path) async {
+  // Säker laddning av assets
+  Future<Uint8List?> _getAssetBytes(String path) async {
     try {
       final ByteData data = await rootBundle.load(path);
       return data.buffer.asUint8List();
     } catch (e) {
-      // Returnera tom lista om bilden saknas så att appen inte kraschar
-      return Uint8List(0);
+      return null;
     }
   }
 
   @override
   Future<List<InstalledApp>> getInstalledAppsFromOS() async {
-    // Ladda ikoner för de befintliga mock-apparna
+    // Ladda ikoner för de appar som faktiskt har bilder i assets
     final instagramIcon = await _getAssetBytes('assets/icons/instagram.png');
     final tiktokIcon = await _getAssetBytes('assets/icons/tiktok.png');
     final notionIcon = await _getAssetBytes('assets/icons/notion.png');
     final netflixIcon = await _getAssetBytes('assets/icons/netflix.png');
-    
-    // NYTT: Ikoner för dina nya kategorier (Se till att dessa filer finns i assets)
-    // Om du inte har bilderna än kan du använda en placeholder eller tom Uint8List(0)
-    final calmIcon = await _getAssetBytes('assets/icons/calm.png');
-    final settingsIcon = await _getAssetBytes('assets/icons/settings.png');
 
     return [
       InstalledApp(
@@ -52,16 +46,16 @@ class MockInstalledAppsDataSourceImpl implements InstalledAppsDataSource {
         name: 'Netflix', 
         iconBytes: netflixIcon,
       ),
-      // LÄGG TILL DESSA: Måste matcha packageName i din MockCategorizationLocalDataSource
+      // Här sätter vi iconBytes till null direkt för att undvika onödiga anrop
       InstalledApp(
         packageName: 'com.relax.calm', 
         name: 'Calm', 
-        iconBytes: calmIcon,
+        iconBytes: null, // Kommer visa default-ikonen automatiskt
       ),
       InstalledApp(
         packageName: 'com.android.settings', 
         name: 'Settings', 
-        iconBytes: settingsIcon,
+        iconBytes: null, // Kommer visa default-ikonen automatiskt
       ),
     ];
   }

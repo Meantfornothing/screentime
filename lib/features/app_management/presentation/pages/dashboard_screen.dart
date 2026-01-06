@@ -11,19 +11,15 @@ import '../../../../core/services/notification_service.dart';
 import 'dart:async';
 import '../../../../core/theme/app_visuals.dart';
 
-
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
-
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-
 class _DashboardScreenState extends State<DashboardScreen> {
   StreamSubscription? _notificationSubscription;
-
 
   @override
   void initState() {
@@ -32,12 +28,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     context.read<DashboardCubit>().loadDashboardData();
   }
 
-
   void _setupNotificationHandling() {
     _notificationSubscription = NotificationService.onTapStream.listen((payload) {
       _handlePayload(payload);
     });
-
 
     NotificationService.getAppLaunchDetails().then((response) {
       if (response?.payload != null) {
@@ -45,7 +39,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     });
   }
-
 
   void _handlePayload(String? payload) {
     if (payload == null) return;
@@ -56,13 +49,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     context.read<DashboardCubit>().loadDashboardData(categoryFilter: category);
   }
 
-
   @override
   void dispose() {
     _notificationSubscription?.cancel();
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +65,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (state.status == DashboardStatus.loading && !state.isGeneratingImage) {
               return const Center(child: CircularProgressIndicator(color: AppColors.primary));
             }
-
 
             return RefreshIndicator(
               onRefresh: () => context.read<DashboardCubit>().loadDashboardData(),
@@ -88,6 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,22 +86,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Text(
                               "Hello, ${state.userName}",
                               style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
+                                fontSize: 14, 
+                                color: AppColors.textSecondary, 
                                 fontWeight: FontWeight.w500
                               ),
                             ),
                             const Text(
                               "Your Dashboard",
                               style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 28, 
+                                fontWeight: FontWeight.bold, 
                                 color: AppColors.textPrimary
                               ),
                             ),
                           ],
                         ),
-                        // DEN NYA KNAPPEN HÄR:
+                        // UPPDATERAD: Knapp med text intill kugghjulsikonen
                         TextButton.icon(
                           onPressed: () {
                             Navigator.push(
@@ -118,18 +109,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               MaterialPageRoute(builder: (context) => const PreferencesScreen()),
                             );
                           },
-                          icon: const Icon(Icons.settings_outlined, size: 18, color: AppColors.textPrimary),
+                          icon: const Icon(
+                            Icons.settings_outlined, 
+                            size: 20, 
+                            color: AppColors.textPrimary
+                          ),
                           label: const Text(
-                            "My preferences",
+                            "My Preferences",
                             style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary
                             ),
                           ),
                           style: TextButton.styleFrom(
-                            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            backgroundColor: AppColors.surface,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
                             ),
@@ -140,10 +135,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 25),
 
-
                   // --- AI VISUALIZATION (ARTWORK) ---
                   _buildAiArtwork(state),
 
+                  // --- FÄRGBESKRIVNING (LEGEND) ---
+                  if (state.aiImageUrl != null || state.isGeneratingImage)
+                    _buildColorLegend(),
 
                   const SizedBox(height: 10),
                   InsightCard(content: state.insightMessage),
@@ -154,7 +151,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     getCategoryColor: AppColors.getCategoryColor,
                   ),
                   const SizedBox(height: 20),
-                 
+                  
                   // --- TEST NOTIFICATION BUTTON ---
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -164,7 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           id: 1,
                           title: "Productivity Boost?",
                           body: "It's time to focus. Switch to your Productivity apps.",
-                          payload: "Productivity",
+                          payload: "Productivity", 
                         );
                       },
                       icon: const Icon(Icons.notification_add_outlined),
@@ -172,7 +169,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.all(16),
                         foregroundColor: AppColors.textPrimary,
-                        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
+                        side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppShapes.buttonRadius)
                         ),
@@ -188,7 +185,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-
   Widget _buildAiArtwork(DashboardState state) {
     return Container(
       height: 280,
@@ -199,7 +195,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         borderRadius: AppShapes.cardBorder,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -208,7 +204,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // The Generated Image
           if (state.aiImageUrl != null)
             Positioned.fill(
               child: Image.network(
@@ -223,11 +218,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-         
-          // Loading Overlay for AI Generation
+          
           if (state.isGeneratingImage)
             Container(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withOpacity(0.3),
               child: const Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -242,8 +236,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-         
-          // Placeholder when no data/image exists
+          
           if (state.aiImageUrl == null && !state.isGeneratingImage)
             const Center(
               child: Column(
@@ -260,6 +253,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildColorLegend() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
+      child: Wrap(
+        spacing: 16,
+        runSpacing: 8,
+        alignment: WrapAlignment.center,
+        children: [
+          _legendItem("Social", AppColors.social),
+          _legendItem("Entertainment", AppColors.entertainment),
+          _legendItem("Productivity", AppColors.productivity),
+          _legendItem("Relaxation", AppColors.relaxation),
+        ],
+      ),
+    );
+  }
+
+  Widget _legendItem(String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }
