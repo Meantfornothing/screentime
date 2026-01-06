@@ -6,7 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GeminiService {
   static String get apiKey => dotenv.env['GEMINI_API_KEY'] ?? "";
-  static const String model = "gemini-2.0-flash-exp";
+  static const String model = "gemini-2.5-flash";
   static const String apiBase = "https://generativelanguage.googleapis.com/v1beta/models";
 
   static Future<String?> generateVisualPrompt({
