@@ -20,11 +20,6 @@ dependencies:
   external_app_launcher: ^4.0.3
   flutter_dotenv: ^5.1.0
 
-flutter:
-  uses-material-design: true
-  assets:
-    - assets/.env
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -36,5 +31,6 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
+    - assets/.env
   uses-material-design: true
 
