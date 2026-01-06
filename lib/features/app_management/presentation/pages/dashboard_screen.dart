@@ -78,6 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,14 +101,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.settings_outlined, size: 28, color: AppColors.textPrimary),
+                        // UPPDATERAD: Knapp med text intill kugghjulsikonen
+                        TextButton.icon(
                           onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(builder: (context) => const PreferencesScreen()),
                             );
                           },
+                          icon: const Icon(
+                            Icons.settings_outlined, 
+                            size: 20, 
+                            color: AppColors.textPrimary
+                          ),
+                          label: const Text(
+                            "My Preferences",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            backgroundColor: AppColors.surface,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -116,6 +137,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   // --- AI VISUALIZATION (ARTWORK) ---
                   _buildAiArtwork(state),
+
+                  // --- FÄRGBESKRIVNING (LEGEND) ---
+                  if (state.aiImageUrl != null || state.isGeneratingImage)
+                    _buildColorLegend(),
 
                   const SizedBox(height: 10),
                   InsightCard(content: state.insightMessage),
@@ -179,7 +204,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // The Generated Image
           if (state.aiImageUrl != null)
             Positioned.fill(
               child: Image.network(
@@ -195,7 +219,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           
-          // Loading Overlay for AI Generation
           if (state.isGeneratingImage)
             Container(
               color: Colors.black.withOpacity(0.3),
@@ -214,7 +237,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           
-          // Placeholder when no data/image exists
           if (state.aiImageUrl == null && !state.isGeneratingImage)
             const Center(
               child: Column(
@@ -231,6 +253,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildColorLegend() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
+      child: Wrap(
+        spacing: 16,
+        runSpacing: 8,
+        alignment: WrapAlignment.center,
+        children: [
+          _legendItem("Social", AppColors.social),
+          _legendItem("Entertainment", AppColors.entertainment),
+          _legendItem("Productivity", AppColors.productivity),
+          _legendItem("Relaxation", AppColors.relaxation),
+        ],
+      ),
+    );
+  }
+
+  Widget _legendItem(String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

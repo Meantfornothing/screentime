@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // ... Existing Colors (Primary, Neutral, Functional) ...
   static const Color primary = Color(0xFFD4AF98);
   static const Color primaryVariant = Color(0xFFB8967E);
   static const Color background = Colors.white;
@@ -11,40 +10,20 @@ class AppColors {
   static const Color error = Color(0xFFBA1A1A);
   static const Color success = Color(0xFF2E7D32);
   
+  static const Color productivity = Color.fromARGB(255, 35, 17, 235);
+  static const Color entertainment = Color.fromARGB(255, 230, 116, 10);
+  static const Color social = Color.fromARGB(255, 225, 229, 34);
+  static const Color relaxation = Color.fromARGB(255, 175, 15, 223);
+  static const Color neutral = Color.fromARGB(255, 133, 132, 133);
 
-  // --- NEW: Category Specific Colors ---
-  static const Color productivity = Color(0xFF2E7D32); // Green
-  static const Color entertainment = Color(0xFFBA1A1A); // Red
-  static const Color social = Color(0xFF1976D2);       // Blue
-  static const Color health = Color(0xFFE91E63);       // Pink
-  static const Color neutral = Color(0xFF607D8B);      // Blue Grey
-
-  /// Static method to retrieve color based on category name
   static Color getCategoryColor(String category) {
     switch (category) {
-      case 'Productivity':
-        return productivity;
-      case 'Entertainment':
-        return entertainment;
-      case 'Social':
-        return social;
-      case 'Health & Fitness':
-        return health;
-      case 'Neutral':
-        return neutral;
-      case 'Uncategorized':
-      case '':
-        return textSecondary.withOpacity(0.4);
-      default:
-        // Fallback for custom categories using a hash-based color
-        final customColors = [
-          Colors.teal,
-          Colors.indigo,
-          Colors.amber,
-          Colors.cyan,
-          Colors.deepOrange,
-        ];
-        return customColors[category.hashCode.abs() % customColors.length];
+      case 'Productivity': return productivity;
+      case 'Entertainment': return entertainment;
+      case 'Social': return social;
+      case 'Relaxation': return relaxation;
+      case 'Neutral': return const Color.fromARGB(255, 133, 132, 133);
+      default: return const Color.fromARGB(255, 133, 132, 133);
     }
   }
 }
@@ -54,8 +33,7 @@ class AppShapes {
   static const double buttonRadius = 12.0;
   static const BorderRadius cardBorder = BorderRadius.all(Radius.circular(cardRadius));
 }
-/// Specialized box for settings and navigation icons.
-/// This is NOT intended for app icons from the phone.
+
 class AppIconBox extends StatelessWidget {
   final IconData icon;
   final Color color;

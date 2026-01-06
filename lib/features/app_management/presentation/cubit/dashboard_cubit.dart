@@ -24,17 +24,15 @@ class DashboardCubit extends Cubit<DashboardState> {
       final userCategories = await repository.getCategories();
       final settings = await settingsRepository.getSettings();
 
-      // 2. Calculate usage statistics
       Duration totalUsage = Duration.zero;
       final Map<String, Duration> categoryUsage = {};
-
+      
       for (var app in apps) {
         totalUsage += app.usageDuration;
-        final category = app.assignedCategoryName ?? 'Uncategorized';
+        final category = app.assignedCategoryName ?? 'Neutral'; // Standard till Neutral
         categoryUsage[category] = (categoryUsage[category] ?? Duration.zero) + app.usageDuration;
       }
 
-      // 3. Identify Top Category
       String topCategory = 'None';
       Duration topDuration = Duration.zero;
       categoryUsage.forEach((key, value) {
@@ -48,8 +46,6 @@ class DashboardCubit extends Cubit<DashboardState> {
       String insight = "You've used your phone for ${totalUsage.inMinutes}m today.";
       if (topCategory != 'None' && topDuration.inMinutes > 0) {
         insight += " Most time spent in $topCategory (${topDuration.inMinutes}m).";
-      } else if (totalUsage.inMinutes == 0) {
-        insight = "No usage data yet. Categorize apps to see detailed insights!";
       }
 
 // Goal-Based Recommendation Logic
@@ -93,21 +89,11 @@ class DashboardCubit extends Cubit<DashboardState> {
 
       // Fallback: Show top usage if goal category is empty
       if (recommended.isEmpty) {
-        final sortedAppsByUsage = List<InstalledApp>.from(apps);
-        sortedAppsByUsage.sort((a, b) => b.usageDuration.compareTo(a.usageDuration));
-        recommended = sortedAppsByUsage.take(5).toList();
+        final sortedApps = List<InstalledApp>.from(apps)..sort((a, b) => b.usageDuration.compareTo(a.usageDuration));
+        recommended = sortedApps.take(5).toList();
         recMessage = "Your most used apps today:";
       }
 
-      // Fallback: If no apps found for the goal category, show top 5 most used apps
-      if (recommended.isEmpty) {
-        final sortedAppsByUsage = List<InstalledApp>.from(apps);
-        sortedAppsByUsage.sort((a, b) => b.usageDuration.compareTo(a.usageDuration));
-        recommended = sortedAppsByUsage.take(5).toList();
-        recMessage = "Your most used apps today:";
-      }
-
-      // 7. AI Image Generation
       String? aiImageUrl = state.aiImageUrl;
       if (totalUsage.inMinutes > 0) {
         emit(state.copyWith(isGeneratingImage: true));
@@ -118,10 +104,9 @@ class DashboardCubit extends Cubit<DashboardState> {
         aiImageUrl = await GeminiService.generateVisualPrompt(categoryPercentages: percentages);
       }
 
-      // 8. Emit Final Success State
       emit(state.copyWith(
         status: DashboardStatus.success,
-        userName: 'User',
+        userName: 'Maria', 
         totalScreenTime: totalUsage,
         mostUsedCategory: topCategory,
         recommendedApps: recommended,
