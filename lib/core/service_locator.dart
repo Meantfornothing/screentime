@@ -1,3 +1,5 @@
+// lib/core/service_locator.dart
+
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 
@@ -31,12 +33,12 @@ final sl = GetIt.instance;
 
 Future<void> init() async {
   // --- CONFIGURATION FLAG ---
-  // Set this to true for presentations/fictional users, false for real device data.
   const bool useMockData = true; 
 
   // 1. Register Adapters
   if (!Hive.isAdapterRegistered(0)) Hive.registerAdapter(AppCategoryEntityAdapter());
   if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(InstalledAppAdapter());
+  // Manual constructor call for the adapter defined in user_settings_entity.dart
   if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(UserSettingsEntityAdapter());
 
   // 2. Open Boxes
@@ -46,7 +48,6 @@ Future<void> init() async {
 
   // 3. Data Sources (Conditional Registration)
   if (useMockData) {
-    // Register Mock Implementations
     sl.registerLazySingleton<CategorizationLocalDataSource>(
       () => MockCategorizationLocalDataSourceImpl(),
     );
@@ -56,19 +57,20 @@ Future<void> init() async {
     sl.registerLazySingleton<AppUsageDataSource>(
       () => MockAppUsageDataSourceImpl(),
     );
+
+    // Seed mock data using the new descriptive goal constants
     if (settingsBox.isEmpty) {
-    await settingsBox.put('current_settings', UserSettingsEntity(
-      userGoal: 'Improve Sleep',
-      dailyScreenTimeGoalMinutes: 120,
-      breakReminderFrequency: 0.5,
-      nudgeIntensity: 0.8,
-      bedtimeHour: 22,
-      bedtimeMinute: 30,
-    ));
-  }
+      await settingsBox.put('current_settings', UserSettingsEntity(
+        userGoal: UserSettingsEntity.goalWorktool, // Updated from hardcoded string
+        dailyScreenTimeGoalMinutes: 120,
+        breakReminderFrequency: 0.5,
+        nudgeIntensity: 0.8,
+        bedtimeHour: 22,
+        bedtimeMinute: 30,
+      ));
+    }
 
   } else {
-    // Register Real Implementations
     sl.registerLazySingleton<CategorizationLocalDataSource>(
       () => CategorizationLocalDataSourceImpl(
         categoryBox: categoryBox,
@@ -84,7 +86,6 @@ Future<void> init() async {
   }
 
   // 4. Repositories
-  // These automatically pick up the correct Data Source from sl() above
   sl.registerLazySingleton<CategorizationRepository>(
     () => CategorizationRepositoryImpl(
       localDataSource: sl(), 
@@ -100,7 +101,8 @@ Future<void> init() async {
   // 5. Cubits
   sl.registerFactory(() => CategorizationCubit(sl()));
   sl.registerFactory(() => SettingsCubit(sl()));
-  sl.registerFactory(() => DashboardCubit(sl()));
+  // DashboardCubit requires both CategorizationRepository and SettingsRepository
+  sl.registerFactory(() => DashboardCubit(sl(), sl())); 
 
   print("Service Locator initialized (Mocking: $useMockData)");
 }
