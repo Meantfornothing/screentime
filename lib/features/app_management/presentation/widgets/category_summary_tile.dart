@@ -49,7 +49,7 @@ class CategorySummaryTile extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   // 2. Use the category color with low opacity for the background
-                  color: categoryColor.withOpacity(0.15), 
+                  color: categoryColor.withOpacity(0.40), 
                   borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
                 ),
                 child: Text(
@@ -58,7 +58,7 @@ class CategorySummaryTile extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     // 3. Use the full category color for the text
-                    color: categoryColor, 
+                    color: Color.fromARGB(255, 61, 61, 61), 
                   ),
                 ),
               ),
