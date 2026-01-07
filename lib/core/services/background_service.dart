@@ -27,7 +27,6 @@ void callbackDispatcher() {
 }
 
 Future<void> _checkUsageAndNotify() async {
-  // Pass the background callback here too
   await NotificationService.initialize(
     onBackgroundNotificationResponse: notificationTapBackground,
   );
@@ -45,7 +44,7 @@ Future<void> _checkUsageAndNotify() async {
     DateTime startDate = endDate.subtract(const Duration(hours: 24));
     List<AppUsageInfo> infoList = await AppUsage().getAppUsage(startDate, endDate);
 
-    const int appUsageThreshold = 120; // 2 hours
+    const int appUsageThreshold = 45; // 2 hours
     final shouldNudge = Random().nextDouble() < settings.breakReminderFrequency;
 
     if (shouldNudge) {
@@ -56,22 +55,20 @@ Future<void> _checkUsageAndNotify() async {
              orElse: () => InstalledApp(packageName: info.packageName, name: info.appName),
            );
 
-           if (appData.assignedCategoryName == 'Productivity') {
-               await _sendNudge(
-                 id: info.packageName.hashCode,
-                 title: "Great work!",
-                 body: "You've been productive. Swap to Entertainment?",
-                 intensity: settings.nudgeIntensity,
-                 payload: 'target_category:Entertainment', // <--- Trigger swap filter
-               );
-           } else {
-               await _sendNudge(
-                 id: info.packageName.hashCode,
-                 title: "High Usage Alert",
-                 body: "You've been using ${info.appName} for ${info.usage.inMinutes}m.",
-                 intensity: settings.nudgeIntensity,
-               );
-           }
+           // Logic: If they are using a Productivity app too much, suggest Entertainment.
+           // Otherwise, suggest moving back to Productivity.
+           final bool isProductive = appData.assignedCategoryName == 'Productivity';
+           final String targetCategory = isProductive ? 'Entertainment' : 'Productivity';
+           final String? payload = isProductive ? 'target_category:Entertainment' : null;
+
+           // Delegate all presentation logic (intensity/strings) to NotificationService
+           await NotificationService.showNudge(
+             id: info.packageName.hashCode,
+             intensity: settings.nudgeIntensity,
+             category: targetCategory,
+             payload: payload,
+           );
+           
            break; 
         }
       }
@@ -82,30 +79,4 @@ Future<void> _checkUsageAndNotify() async {
     await settingsBox.close();
     await installedAppsBox.close();
   }
-}
-
-Future<void> _sendNudge({
-  required int id,
-  required String title,
-  required String body,
-  required double intensity,
-  String? payload,
-}) async {
-  String finalTitle = title;
-  String finalBody = body;
-
-  if (intensity > 0.8) {
-    finalTitle = "STOP SCROLLING!";
-    finalBody = body.toUpperCase() + " PUT THE PHONE DOWN.";
-  } else if (intensity < 0.3) {
-    finalTitle = "Gentle Nudge";
-    finalBody = "Hey, $body maybe take a breath?";
-  }
-  
-  await NotificationService.showNotification(
-    id: id,
-    title: finalTitle,
-    body: finalBody,
-    payload: payload,
-  );
 }

@@ -28,8 +28,6 @@ class _PreferencesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Removed local goal list - now using UserSettingsEntity.allGoals
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -39,7 +37,7 @@ class _PreferencesView extends StatelessWidget {
               return const Center(child: CircularProgressIndicator(color: AppColors.primary));
             }
 
-            final currentGoal = state.settings.userGoal;
+            final currentSettings = state.settings;
 
             return ListView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -60,51 +58,69 @@ class _PreferencesView extends StatelessWidget {
                 ),
                 const SizedBox(height: 40),
 
-                // --- GOAL SELECTION ---
+                // --- GOAL SELECTION (UPDATED) ---
                 const Text(
                   'What is your main goal?',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 16),
+                
                 SettingCard(
+                  title: 'Current Focus Goal',
+                  icon: Icons.track_changes_rounded,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Select Goal', style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        // Handle potential legacy values from Hive
-                        value: UserSettingsEntity.allGoals.contains(currentGoal) 
-                            ? currentGoal 
-                            : UserSettingsEntity.allGoals.first,
-                        isExpanded: true, // Crucial for long text
-                        dropdownColor: AppColors.surface,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: AppColors.background,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
-                            borderSide: BorderSide(color: AppColors.textSecondary.withOpacity(0.2)),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                        ),
-                        items: UserSettingsEntity.allGoals.map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              value, 
-                              style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
-                              overflow: TextOverflow.visible, // Allow multiline in dropdown
+                    children: UserSettingsEntity.allGoals.map((goal) {
+                      final isSelected = currentSettings.userGoal == goal;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: InkWell(
+                          onTap: () => context.read<SettingsCubit>().updateUserGoal(goal),
+                          borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isSelected 
+                                  ? AppColors.primary.withOpacity(0.15) 
+                                  : AppColors.surface,
+                              borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
+                              border: Border.all(
+                                color: isSelected ? AppColors.primary : Colors.transparent,
+                                width: 1.5,
+                              ),
                             ),
-                          );
-                        }).toList(),
-                        onChanged: (newValue) {
-                          if (newValue != null) {
-                            context.read<SettingsCubit>().updateUserGoal(newValue);
-                          }
-                        },
-                      ),
-                    ],
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        goal,
+                                        style: TextStyle(
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        UserSettingsEntity.getGoalDescription(goal),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (isSelected)
+                                  const Icon(Icons.check_circle, color: AppColors.primary),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
 

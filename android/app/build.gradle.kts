@@ -13,35 +13,44 @@ tasks.withType<KotlinCompile>().configureEach {
 }
 
 android {
+    // 1. Correct namespace for your current "screentime" project
     namespace = "com.example.screentime"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973" // Ensure this matches your installed NDK
+    
+    // 2. Updated to r28 for better 16KB page support (Recommended for 2026)
+    ndkVersion = "28.0.12674087" 
 
     compileOptions {
-        // 3. Enable Desugaring for Java 8+ features on older Androids
+        // Required for using modern Java features (like Streams) on older Android versions
         isCoreLibraryDesugaringEnabled = true
         
-        // 4. Set Java Compatibility to 17
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // Kotlin options block removed in favor of tasks.withType above to avoid deprecation errors
-
     defaultConfig {
         applicationId = "com.example.screentime"
+        
+        // Ensure these use the properties provided by the Flutter Gradle Plugin
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
+        
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         
-        // 5. Enable MultiDex
-        multiDexEnabled = true
+        // Native multidex is active for minSdk 21+, so this is optional
+        multiDexEnabled = true 
     }
 
     buildTypes {
         release {
+            // Standard debug-key signing for development; change for production!
             signingConfig = signingConfigs.getByName("debug")
+            
+            // Realign-specific: Enable shrinking for better performance
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }

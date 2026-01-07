@@ -1,14 +1,15 @@
 // lib/core/services/notification_service.dart
 
-import 'dart:async'; // Required for StreamController
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+// Import your logic utility
+import '../utils/nudge_logic.dart'; 
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  // A broadcast stream to allow multiple widgets to listen for notification taps
   static final _onTapController = StreamController<String?>.broadcast();
   static Stream<String?> get onTapStream => _onTapController.stream;
 
@@ -34,13 +35,12 @@ class NotificationService {
     await _notificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (response) {
-        // Emit the payload to the stream
         _onTapController.add(response.payload);
         onNotificationResponse?.call(response);
       },
       onDidReceiveBackgroundNotificationResponse: onBackgroundNotificationResponse,
     );
-    // ADD THIS BLOCK: Request Android 13+ permissions explicitly
+
     final androidImplementation =
       _notificationsPlugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
@@ -50,10 +50,40 @@ class NotificationService {
     }
   }
 
-  /// Checks if the app was launched via a notification tap (Terminated state)
   static Future<NotificationResponse?> getAppLaunchDetails() async {
     final details = await _notificationsPlugin.getNotificationAppLaunchDetails();
     return details?.notificationResponse;
+  }
+
+  /// New specialized method to handle intensity-based nudges
+  static Future<void> showNudge({
+    required int id,
+    required double intensity,
+    required String category,
+    String? payload,
+  }) async {
+    // 1. Use NudgeLogic to get strings based on intensity
+    final String title = NudgeLogic.getTitle(intensity);
+    final String body = NudgeLogic.getBody(intensity, category);
+
+    // 2. Map intensity to Android Importance levels
+    Importance importance;
+    if (intensity >= 0.7) {
+      importance = Importance.max; // High priority, intrusive
+    } else if (intensity < 0.3) {
+      importance = Importance.defaultImportance; // Subtle
+    } else {
+      importance = Importance.high; // Standard alert
+    }
+
+    // 3. Forward to the generic showNotification method
+    await showNotification(
+      id: id,
+      title: title,
+      body: body,
+      payload: payload,
+      importance: importance,
+    );
   }
 
   static Future<void> showNotification({
@@ -61,25 +91,25 @@ class NotificationService {
     required String title,
     required String body,
     String? payload,
+    Importance importance = Importance.max, 
   }) async {
-    // ... (rest of your existing showNotification logic)
     final BigTextStyleInformation bigTextStyleInformation =
         BigTextStyleInformation(
       body,
       htmlFormatBigText: true,
       contentTitle: '<b>$title</b>',
       htmlFormatContentTitle: true,
-      summaryText: 'Usage Alert',
+      summaryText: 'Goal Nudge',
       htmlFormatSummaryText: true,
     );
 
     final AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'usage_monitor_channel', 
-      'Usage Monitor', 
-      channelDescription: 'Notifications for screen time limits',
-      importance: Importance.max,
-      priority: Priority.high,
+      'realign_goals_channel', 
+      'ReAlign Goals',         
+      channelDescription: 'Notifications to help you stick to your focus goals',
+      importance: importance,
+      priority: importance == Importance.max ? Priority.high : Priority.defaultPriority,
       showWhen: true,
       color: const Color(0xFFD4AF98),
       styleInformation: bigTextStyleInformation,

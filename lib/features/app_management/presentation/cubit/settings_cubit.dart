@@ -5,7 +5,10 @@ import 'settings_state.dart';
 class SettingsCubit extends Cubit<SettingsState> {
   final SettingsRepository repository;
 
-  SettingsCubit(this.repository) : super(SettingsState.initial());
+  SettingsCubit(this.repository) : super(SettingsState.initial()){
+    loadSettings();
+  }
+
 
   Future<void> loadSettings() async {
     try {
@@ -37,6 +40,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> updateNudgeIntensity(double value) async {
     final newSettings = state.settings.copyWith(nudgeIntensity: value);
     emit(state.copyWith(settings: newSettings));
+    await saveSettings();
   }
 
   Future<void> updateBedtime(int hour, int minute) async {

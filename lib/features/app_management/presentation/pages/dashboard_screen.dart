@@ -1,15 +1,21 @@
 // lib/features/app_management/presentation/pages/dashboard_screen.dart
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:app_usage/app_usage.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
 import '../cubit/dashboard_cubit.dart';
 import '../cubit/dashboard_state.dart';
-import '../widgets/insight_card.dart';
-import '../widgets/recommendations_card.dart';
+import '../cubit/settings_cubit.dart';
+import '../cubit/settings_state.dart';
+import '../widgets/widgets.dart'; // Ensure AiArtworkCard, DashboardLegend, InsightCard, etc. are here
 import 'preferences_screen.dart';
+import 'settings_screen.dart';
 import '../../../../core/services/notification_service.dart';
-import 'dart:async';
 import '../../../../core/theme/app_visuals.dart';
+import '../../../../core/utils/nudge_logic.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -18,14 +24,48 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingObserver {
   StreamSubscription? _notificationSubscription;
+  
+  // Tracks if the ACTUAL Android system has granted permission
+  bool _isSystemPermissionGranted = true;
 
   @override
   void initState() {
     super.initState();
+    // Register the observer to detect when Maria returns from Android Settings
+    WidgetsBinding.instance.addObserver(this);
+    
     _setupNotificationHandling();
+    _checkRealSystemPermission(); 
     context.read<DashboardCubit>().loadDashboardData();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _notificationSubscription?.cancel();
+    super.dispose();
+  }
+
+  // Detects when the app is brought back to the foreground
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkRealSystemPermission();
+    }
+  }
+
+  // The "Canary Fetch": Tries to get real data to see if the system is unlocked
+  Future<void> _checkRealSystemPermission() async {
+    try {
+      DateTime now = DateTime.now();
+      await AppUsage().getAppUsage(now.subtract(const Duration(seconds: 1)), now);
+      if (mounted) setState(() => _isSystemPermissionGranted = true);
+    } catch (e) {
+      // If an error occurs, permission is missing
+      if (mounted) setState(() => _isSystemPermissionGranted = false);
+    }
   }
 
   void _setupNotificationHandling() {
@@ -49,252 +89,168 @@ class _DashboardScreenState extends State<DashboardScreen> {
     context.read<DashboardCubit>().loadDashboardData(categoryFilter: category);
   }
 
-  @override
-  void dispose() {
-    _notificationSubscription?.cancel();
-    super.dispose();
-  }
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: AppColors.background,
+    body: SafeArea(
+      // 1. Add this wrapper to listen for settings changes (like Nudge Intensity)
+      child: BlocBuilder<SettingsCubit, SettingsState>(
+        builder: (context, settingsState) {
+          return BlocBuilder<DashboardCubit, DashboardState>(
+            builder: (context, state) {
+              if (state.status == DashboardStatus.loading && !state.isGeneratingImage) {
+                return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+              }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: BlocBuilder<DashboardCubit, DashboardState>(
-          builder: (context, state) {
-            if (state.status == DashboardStatus.loading && !state.isGeneratingImage) {
-              return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-            }
-
-            return RefreshIndicator(
-              onRefresh: () => context.read<DashboardCubit>().loadDashboardData(),
-              color: AppColors.primary,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(vertical: 20),
+              return Stack(
                 children: [
-                  // --- HEADER ---
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                  // --- LAYER 0: THE DASHBOARD ---
+                  RefreshIndicator(
+                    onRefresh: () => context.read<DashboardCubit>().loadDashboardData(),
+                    color: AppColors.primary,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Hello, ${state.userName}",
-                              style: const TextStyle(
-                                fontSize: 14, 
-                                color: AppColors.textSecondary, 
-                                fontWeight: FontWeight.w500
-                              ),
-                            ),
-                            const Text(
-                              "Your Dashboard",
-                              style: TextStyle(
-                                fontSize: 28, 
-                                fontWeight: FontWeight.bold, 
-                                color: AppColors.textPrimary
-                              ),
-                            ),
-                          ],
+                        _buildHeader(state),
+                        const SizedBox(height: 25),
+
+                        AiArtworkCard(
+                          imageUrl: state.aiImageUrl,
+                          isGenerating: state.isGeneratingImage,
                         ),
-                        // UPPDATERAD: Knapp med text intill kugghjulsikonen
-                        TextButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const PreferencesScreen()),
-                            );
-                          },
-                          icon: const Icon(
-                            Icons.settings_outlined, 
-                            size: 20, 
-                            color: AppColors.textPrimary
-                          ),
-                          label: const Text(
-                            "My Preferences",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary
-                            ),
-                          ),
-                          style: TextButton.styleFrom(
-                            backgroundColor: AppColors.surface,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
-                            ),
-                          ),
+                        
+                        if (state.aiImageUrl != null || state.isGeneratingImage)
+                          const DashboardLegend(),
+
+                        const SizedBox(height: 10),
+                        InsightCard(content: state.insightMessage),
+                        const SizedBox(height: 10),
+                        RecommendationsCard(
+                          content: state.recommendationMessage,
+                          recommendedApps: state.recommendedApps,
+                          getCategoryColor: AppColors.getCategoryColor,
                         ),
+                        const SizedBox(height: 20),
+                        
+                        // 2. Pass the settingsState to the button so it uses the new intensity
+                        _buildTestNudgeButton(state, settingsState),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 25),
 
-                  // --- AI VISUALIZATION (ARTWORK) ---
-                  _buildAiArtwork(state),
-
-                  // --- FÄRGBESKRIVNING (LEGEND) ---
-                  if (state.aiImageUrl != null || state.isGeneratingImage)
-                    _buildColorLegend(),
-
-                  const SizedBox(height: 10),
-                  InsightCard(content: state.insightMessage),
-                  const SizedBox(height: 10),
-                  RecommendationsCard(
-                    content: state.recommendationMessage,
-                    recommendedApps: state.recommendedApps,
-                    getCategoryColor: AppColors.getCategoryColor,
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // --- TEST NOTIFICATION BUTTON ---
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        await NotificationService.showNotification(
-                          id: 1,
-                          title: "Productivity Boost?",
-                          body: "It's time to focus. Switch to your Productivity apps.",
-                          payload: "Productivity", 
-                        );
-                      },
-                      icon: const Icon(Icons.notification_add_outlined),
-                      label: const Text("Test Clickable Swap Nudge"),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.all(16),
-                        foregroundColor: AppColors.textPrimary,
-                        side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppShapes.buttonRadius)
-                        ),
-                      ),
-                    ),
-                  ),
+                  // --- LAYER 1: PERMISSION OVERLAY ---
+                  if (!_isSystemPermissionGranted)
+                    _buildPermissionOverlay(),
                 ],
-              ),
-            );
-          },
-        ),
+              );
+            },
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildAiArtwork(DashboardState state) {
-    return Container(
-      height: 280,
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppShapes.cardBorder,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          if (state.aiImageUrl != null)
-            Positioned.fill(
-              child: Image.network(
-                state.aiImageUrl!,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-                },
-                errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Icon(Icons.broken_image, color: AppColors.textSecondary, size: 40),
-                ),
-              ),
-            ),
-          
-          if (state.isGeneratingImage)
-            Container(
-              color: Colors.black.withOpacity(0.3),
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: Colors.white),
-                    SizedBox(height: 12),
-                    Text(
-                      "AI is painting your day...",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          
-          if (state.aiImageUrl == null && !state.isGeneratingImage)
-            const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.auto_awesome, color: AppColors.primary, size: 48),
-                  SizedBox(height: 12),
-                  Text(
-                    "Categorize apps to see your daily art",
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
+  // --- UI COMPONENTS ---
 
-  Widget _buildColorLegend() {
+  Widget _buildHeader(DashboardState state) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
-      child: Wrap(
-        spacing: 16,
-        runSpacing: 8,
-        alignment: WrapAlignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _legendItem("Social", AppColors.social),
-          _legendItem("Entertainment", AppColors.entertainment),
-          _legendItem("Productivity", AppColors.productivity),
-          _legendItem("Relaxation", AppColors.relaxation),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Hello, ${state.userName}",
+                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+              ),
+              const Text(
+                "Your Dashboard",
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              ),
+            ],
+          ),
+          TextButton.icon(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PreferencesScreen())),
+            icon: const Icon(Icons.settings_outlined, size: 20, color: AppColors.textPrimary),
+            label: const Text("My Preferences", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            style: TextButton.styleFrom(
+              backgroundColor: AppColors.surface,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppShapes.buttonRadius)),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _legendItem(String label, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
+  Widget _buildPermissionOverlay() {
+    return Container(
+      color: Colors.black.withOpacity(0.85),
+      width: double.infinity,
+      height: double.infinity,
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.lock_person_rounded, size: 80, color: Colors.white),
+          const SizedBox(height: 24),
+          const Text(
+            "System Access Required",
+            style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
           ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w500,
+          const SizedBox(height: 12),
+          const Text(
+            "To accurately visualize Maria's phone usage, ReAlign needs 'Usage Access' permission in your Android settings.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.5),
           ),
-        ),
-      ],
+          const SizedBox(height: 32),
+          ElevatedButton(
+            onPressed: () => context.read<DashboardCubit>().ensureSystemPermissions(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            ),
+            child: const Text("Open Android Settings"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTestNudgeButton(DashboardState state, SettingsState settingsState) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: OutlinedButton.icon(
+        onPressed: () async {
+          // 1. Get current settings (intensity and goal)
+          final intensity = settingsState.settings.nudgeIntensity;
+
+          // 2. Determine target category
+          final String focusCategory = state.recommendedApps.isNotEmpty 
+              ? (state.recommendedApps.first.assignedCategoryName ?? "Productivity")
+              : "Productivity";
+
+          // 3. Trigger notification using your new utility
+          await NotificationService.showNotification(
+            id: 1,
+            title: NudgeLogic.getTitle(intensity),
+            body: NudgeLogic.getBody(intensity, focusCategory),
+            payload: focusCategory,
+            importance: intensity > 0.7 ? Importance.max : Importance.defaultImportance,
+          );
+        },
+        icon: const Icon(Icons.bolt, color: AppColors.primary),
+        label: const Text("Test Goal Nudge"),
+        // ... style code ...
+      ),
     );
   }
 }
