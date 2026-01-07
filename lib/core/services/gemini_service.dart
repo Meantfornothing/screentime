@@ -69,8 +69,8 @@ class GeminiService {
     final systemPrompt = 
         "You are an AI artist creating an abstract data visualization painting. "
         "Create a cohesive composition where colors correspond to these percentages: "
-        "Productivity (Green geometric), Entertainment (Orange energy), Social (Purple bubbles), "
-        "Relaxation (Blue waves), Neutral (Grey stone). "
+        "Productivity (Blue geometric), Entertainment (Orange energy), Social (Yellow bubbles), "
+        "Relaxation (Purple waves), Neutral (Grey stone). "
         "Output ONLY a descriptive prompt in English (max 40 words).";
 
     final url = Uri.parse("$apiBase/$model:generateContent?key=$apiKey");
