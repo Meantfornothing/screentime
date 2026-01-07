@@ -53,27 +53,29 @@ class DashboardCubit extends Cubit<DashboardState> {
       String recMessage = "";
       String? targetCategory = categoryFilter;
 
+      // 1. Refined Goal Mapping
       if (targetCategory == null) {
         switch (settings.userGoal) {
           case UserSettingsEntity.goalWorktool:
           case UserSettingsEntity.goalProductivePrecedence:
             targetCategory = 'Productivity';
-            recMessage = "Stay focused! Use these tools:";
+            recMessage = "Work mode active, Maria! Use these:";
             break;
           case UserSettingsEntity.goalSocial:
             targetCategory = 'Social';
-            recMessage = "Connect with your people:";
+            recMessage = "Time to connect with friends:";
             break;
           case UserSettingsEntity.goalEntertainment:
             targetCategory = 'Entertainment';
-            recMessage = "Ready for a break? Try these:";
+            recMessage = "Time for a break with SVT or Socials:";
             break;
           case UserSettingsEntity.goalRelaxingContent:
           case UserSettingsEntity.goalReduceStress:
-            targetCategory = 'Relaxation'; 
-            recMessage = "Breathe and unwind:";
+            targetCategory = 'Relaxation'; // Matches your mock data category
+            recMessage = "Time to wind down with Storytel:";
             break;
           default:
+            // Fallback: Pick a category Maria isn't currently using much
             final otherCategories = userCategories.map((e) => e.name).where((n) => n != topCategory).toList();
             if (otherCategories.isNotEmpty) {
               targetCategory = otherCategories[Random().nextInt(otherCategories.length)];
@@ -82,12 +84,11 @@ class DashboardCubit extends Cubit<DashboardState> {
         }
       }
 
-      // Filter based on target category
+      // 2. Final Filtering (Remove the redundant double-fallback blocks from your snippet)
       if (targetCategory != null) {
         recommended = apps.where((app) => app.assignedCategoryName == targetCategory).toList();
       }
 
-      // Fallback: Show top usage if goal category is empty
       if (recommended.isEmpty) {
         final sortedApps = List<InstalledApp>.from(apps)..sort((a, b) => b.usageDuration.compareTo(a.usageDuration));
         recommended = sortedApps.take(5).toList();
