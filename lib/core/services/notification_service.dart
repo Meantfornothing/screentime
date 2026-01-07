@@ -3,6 +3,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+// Import your logic utility
+import '../utils/nudge_logic.dart'; 
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
@@ -53,12 +55,42 @@ class NotificationService {
     return details?.notificationResponse;
   }
 
+  /// New specialized method to handle intensity-based nudges
+  static Future<void> showNudge({
+    required int id,
+    required double intensity,
+    required String category,
+    String? payload,
+  }) async {
+    // 1. Use NudgeLogic to get strings based on intensity
+    final String title = NudgeLogic.getTitle(intensity);
+    final String body = NudgeLogic.getBody(intensity, category);
+
+    // 2. Map intensity to Android Importance levels
+    Importance importance;
+    if (intensity >= 0.7) {
+      importance = Importance.max; // High priority, intrusive
+    } else if (intensity < 0.3) {
+      importance = Importance.defaultImportance; // Subtle
+    } else {
+      importance = Importance.high; // Standard alert
+    }
+
+    // 3. Forward to the generic showNotification method
+    await showNotification(
+      id: id,
+      title: title,
+      body: body,
+      payload: payload,
+      importance: importance,
+    );
+  }
+
   static Future<void> showNotification({
     required int id,
     required String title,
     required String body,
     String? payload,
-    // Added importance parameter to react to nudge intensity
     Importance importance = Importance.max, 
   }) async {
     final BigTextStyleInformation bigTextStyleInformation =
@@ -67,14 +99,14 @@ class NotificationService {
       htmlFormatBigText: true,
       contentTitle: '<b>$title</b>',
       htmlFormatContentTitle: true,
-      summaryText: 'Goal Nudge', // Updated for clarity
+      summaryText: 'Goal Nudge',
       htmlFormatSummaryText: true,
     );
 
     final AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'realign_goals_channel', // Updated Channel ID
-      'ReAlign Goals',         // Updated Channel Name
+      'realign_goals_channel', 
+      'ReAlign Goals',         
       channelDescription: 'Notifications to help you stick to your focus goals',
       importance: importance,
       priority: importance == Importance.max ? Priority.high : Priority.defaultPriority,
@@ -112,4 +144,3 @@ class NotificationService {
     );
   }
 }
-

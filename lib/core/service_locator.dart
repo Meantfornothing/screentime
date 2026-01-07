@@ -60,7 +60,7 @@ Future<void> init() async {
 
     // Seed mock data using the new descriptive goal constants
     if (settingsBox.isEmpty) {
-      await settingsBox.put('current_settings', UserSettingsEntity(
+      await settingsBox.put('user_settings', UserSettingsEntity(
         userGoal: UserSettingsEntity.goalWorktool, // Updated from hardcoded string
         dailyScreenTimeGoalMinutes: 120,
         breakReminderFrequency: 0.5,

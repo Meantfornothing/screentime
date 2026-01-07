@@ -40,6 +40,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> updateNudgeIntensity(double value) async {
     final newSettings = state.settings.copyWith(nudgeIntensity: value);
     emit(state.copyWith(settings: newSettings));
+    await saveSettings();
   }
 
   Future<void> updateBedtime(int hour, int minute) async {
