@@ -37,7 +37,15 @@ class _SliderSettingState extends State<SliderSetting> {
     super.initState();
     _currentValue = widget.initialValue;
   }
-
+  @override
+    void didUpdateWidget(covariant SliderSetting oldWidget) {
+      super.didUpdateWidget(oldWidget);
+      if (oldWidget.initialValue != widget.initialValue) {
+        setState(() {
+          _currentValue = widget.initialValue;
+        });
+      }
+    }
   @override
   Widget build(BuildContext context) {
     // The current value, mapped to a display label if a mapper is provided
