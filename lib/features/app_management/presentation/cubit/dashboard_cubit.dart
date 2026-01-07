@@ -29,7 +29,7 @@ class DashboardCubit extends Cubit<DashboardState> {
       
       for (var app in apps) {
         totalUsage += app.usageDuration;
-        final category = app.assignedCategoryName ?? 'Neutral'; // Standard till Neutral
+        final category = app.assignedCategoryName ?? 'Neutral';
         categoryUsage[category] = (categoryUsage[category] ?? Duration.zero) + app.usageDuration;
       }
 
@@ -42,40 +42,52 @@ class DashboardCubit extends Cubit<DashboardState> {
         }
       });
 
-      // 4. Create Insight Message
-      String insight = "You've used your phone for ${totalUsage.inMinutes}m today.";
-      if (topCategory != 'None' && topDuration.inMinutes > 0) {
-        insight += " Most time spent in $topCategory (${topDuration.inMinutes}m).";
+      // 2. Percentage Calculation & AI Insight Message
+      final Map<String, int> percentages = {};
+      String insight = totalUsage.inMinutes == 0 
+          ? "No usage data yet. Categorize apps to see detailed insights!" 
+          : "You've used your phone for ${totalUsage.inMinutes}m today.";
+
+      if (totalUsage.inMinutes > 0) {
+        // Calculate Percentages once for both AI features
+        categoryUsage.forEach((cat, duration) {
+          percentages[cat] = ((duration.inMinutes / totalUsage.inMinutes) * 100).round();
+        });
+
+        // Generate AI-powered reflective insight
+        final aiInsight = await GeminiService.generateInsightMessage(
+          userGoal: settings.userGoal,
+          categoryPercentages: percentages,
+        );
+        if (aiInsight != null) insight = aiInsight;
       }
 
-// Goal-Based Recommendation Logic
+      // 3. Goal-Based Recommendation Logic
       List<InstalledApp> recommended = [];
       String recMessage = "";
       String? targetCategory = categoryFilter;
 
-      // 1. Refined Goal Mapping
       if (targetCategory == null) {
         switch (settings.userGoal) {
           case UserSettingsEntity.goalWorktool:
           case UserSettingsEntity.goalProductivePrecedence:
             targetCategory = 'Productivity';
-            recMessage = "Work mode active, Maria! Use these:";
+            recMessage = "Stay focused! Use these tools:";
             break;
           case UserSettingsEntity.goalSocial:
             targetCategory = 'Social';
-            recMessage = "Time to connect with friends:";
+            recMessage = "Connect with your people:";
             break;
           case UserSettingsEntity.goalEntertainment:
             targetCategory = 'Entertainment';
-            recMessage = "Time for a break with SVT or Socials:";
+            recMessage = "Ready for a break? Try these:";
             break;
           case UserSettingsEntity.goalRelaxingContent:
           case UserSettingsEntity.goalReduceStress:
-            targetCategory = 'Relaxation'; // Matches your mock data category
-            recMessage = "Time to wind down with Storytel:";
+            targetCategory = 'Relaxation'; 
+            recMessage = "Breathe and unwind:";
             break;
           default:
-            // Fallback: Pick a category Maria isn't currently using much
             final otherCategories = userCategories.map((e) => e.name).where((n) => n != topCategory).toList();
             if (otherCategories.isNotEmpty) {
               targetCategory = otherCategories[Random().nextInt(otherCategories.length)];
@@ -84,7 +96,6 @@ class DashboardCubit extends Cubit<DashboardState> {
         }
       }
 
-      // 2. Final Filtering (Remove the redundant double-fallback blocks from your snippet)
       if (targetCategory != null) {
         recommended = apps.where((app) => app.assignedCategoryName == targetCategory).toList();
       }
@@ -95,16 +106,15 @@ class DashboardCubit extends Cubit<DashboardState> {
         recMessage = "Your most used apps today:";
       }
 
+      // 4. AI Image Generation
       String? aiImageUrl = state.aiImageUrl;
       if (totalUsage.inMinutes > 0) {
         emit(state.copyWith(isGeneratingImage: true));
-        final Map<String, int> percentages = {};
-        categoryUsage.forEach((cat, duration) {
-          percentages[cat] = ((duration.inMinutes / totalUsage.inMinutes) * 100).round();
-        });
+        // Use the percentages calculated above
         aiImageUrl = await GeminiService.generateVisualPrompt(categoryPercentages: percentages);
       }
 
+      // 5. Final State Update
       emit(state.copyWith(
         status: DashboardStatus.success,
         userName: 'Maria', 

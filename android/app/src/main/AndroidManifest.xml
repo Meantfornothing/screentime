@@ -24,7 +24,7 @@
     <application
         android:label="screentime"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
 
         <!-- WORKMANAGER: Ensure the WorkManager components are registered (often done by the plugin itself, but good practice to verify or include if the plugin is older) -->
 

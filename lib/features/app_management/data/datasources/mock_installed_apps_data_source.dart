@@ -30,7 +30,7 @@ class MockInstalledAppsDataSourceImpl implements InstalledAppsDataSource {
     final googleIcon = await _getSafeAssetBytes('assets/icons/google.png');
     final youtubeIcon = await _getSafeAssetBytes('assets/icons/youtube.png');
     final messengerIcon = await _getSafeAssetBytes('assets/icons/messenger.png');
-    final telefonIcon = await _getSafeAssetBytes('assets/icons/telefon.png');
+    final telefonIcon = await _getSafeAssetBytes('assets/icons/phone.png');
     final storytelIcon = await _getSafeAssetBytes('assets/icons/storytel.png');
     final svdkorsordIcon = await _getSafeAssetBytes('assets/icons/svdkorsord.png');
     final bankidIcon = await _getSafeAssetBytes('assets/icons/bankid.png');
