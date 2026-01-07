@@ -13,6 +13,7 @@ import '../widgets/widgets.dart'; // Ensure AiArtworkCard, DashboardLegend, Insi
 import 'preferences_screen.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/app_visuals.dart';
+import '../../../../core/utils/nudge_logic.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -217,32 +218,32 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     );
   }
 
-  Widget _buildTestNudgeButton(DashboardState state) {
+    Widget _buildTestNudgeButton(DashboardState state) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: OutlinedButton.icon(
         onPressed: () async {
+          // 1. Get current settings (intensity and goal)
           final settings = context.read<SettingsCubit>().state.settings;
-          final focusCategory = state.recommendedApps.isNotEmpty 
+          final intensity = settings.nudgeIntensity;
+
+          // 2. Determine target category
+          final String focusCategory = state.recommendedApps.isNotEmpty 
               ? (state.recommendedApps.first.assignedCategoryName ?? "Productivity")
               : "Productivity";
 
+          // 3. Trigger notification using your new utility
           await NotificationService.showNotification(
             id: 1,
-            title: NudgeLogic.getTitle(settings.nudgeIntensity),
-            body: NudgeLogic.getBody(settings.nudgeIntensity, focusCategory),
+            title: NudgeLogic.getTitle(intensity),
+            body: NudgeLogic.getBody(intensity, focusCategory),
             payload: focusCategory,
-            importance: settings.nudgeIntensity > 0.7 ? Importance.max : Importance.defaultImportance,
+            importance: intensity > 0.7 ? Importance.max : Importance.defaultImportance,
           );
         },
         icon: const Icon(Icons.bolt, color: AppColors.primary),
         label: const Text("Test Goal Nudge"),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.all(16),
-          foregroundColor: AppColors.textPrimary,
-          side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppShapes.buttonRadius)),
-        ),
+        // ... style code ...
       ),
     );
   }

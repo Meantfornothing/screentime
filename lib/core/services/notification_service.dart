@@ -113,22 +113,3 @@ class NotificationService {
   }
 }
 
-// --- NUDGE LOGIC ---
-// This class determines the "Strictness" of the message based on Maria's settings.
-class NudgeLogic {
-  static String getTitle(double intensity) {
-    if (intensity < 0.3) return "A gentle reminder";
-    if (intensity < 0.7) return "Focus ReAlign";
-    return "🚨 ACTION REQUIRED";
-  }
-
-  static String getBody(double intensity, String category) {
-    if (intensity < 0.3) {
-      return "Maria, perhaps it's time for some $category apps?";
-    } else if (intensity < 0.7) {
-      return "Time to shift gears! Switch to your $category apps now.";
-    } else {
-      return "Focus check! You're drifting. Get back to $category tools immediately.";
-    }
-  }
-}
