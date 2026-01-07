@@ -9,8 +9,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../cubit/dashboard_cubit.dart';
 import '../cubit/dashboard_state.dart';
 import '../cubit/settings_cubit.dart';
+import '../cubit/settings_state.dart';
 import '../widgets/widgets.dart'; // Ensure AiArtworkCard, DashboardLegend, InsightCard, etc. are here
 import 'preferences_screen.dart';
+import 'settings_screen.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/app_visuals.dart';
 import '../../../../core/utils/nudge_logic.dart';
@@ -87,64 +89,69 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     context.read<DashboardCubit>().loadDashboardData(categoryFilter: category);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: BlocBuilder<DashboardCubit, DashboardState>(
-          builder: (context, state) {
-            // Show global loader only on initial boot
-            if (state.status == DashboardStatus.loading && !state.isGeneratingImage) {
-              return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-            }
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: AppColors.background,
+    body: SafeArea(
+      // 1. Add this wrapper to listen for settings changes (like Nudge Intensity)
+      child: BlocBuilder<SettingsCubit, SettingsState>(
+        builder: (context, settingsState) {
+          return BlocBuilder<DashboardCubit, DashboardState>(
+            builder: (context, state) {
+              if (state.status == DashboardStatus.loading && !state.isGeneratingImage) {
+                return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+              }
 
-            return Stack(
-              children: [
-                // --- LAYER 0: THE DASHBOARD ---
-                RefreshIndicator(
-                  onRefresh: () => context.read<DashboardCubit>().loadDashboardData(),
-                  color: AppColors.primary,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    children: [
-                      _buildHeader(state),
-                      const SizedBox(height: 25),
+              return Stack(
+                children: [
+                  // --- LAYER 0: THE DASHBOARD ---
+                  RefreshIndicator(
+                    onRefresh: () => context.read<DashboardCubit>().loadDashboardData(),
+                    color: AppColors.primary,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      children: [
+                        _buildHeader(state),
+                        const SizedBox(height: 25),
 
-                      AiArtworkCard(
-                        imageUrl: state.aiImageUrl,
-                        isGenerating: state.isGeneratingImage,
-                      ),
-                      
-                      if (state.aiImageUrl != null || state.isGeneratingImage)
-                        const DashboardLegend(),
+                        AiArtworkCard(
+                          imageUrl: state.aiImageUrl,
+                          isGenerating: state.isGeneratingImage,
+                        ),
+                        
+                        if (state.aiImageUrl != null || state.isGeneratingImage)
+                          const DashboardLegend(),
 
-                      const SizedBox(height: 10),
-                      InsightCard(content: state.insightMessage),
-                      const SizedBox(height: 10),
-                      RecommendationsCard(
-                        content: state.recommendationMessage,
-                        recommendedApps: state.recommendedApps,
-                        getCategoryColor: AppColors.getCategoryColor,
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      _buildTestNudgeButton(state),
-                    ],
+                        const SizedBox(height: 10),
+                        InsightCard(content: state.insightMessage),
+                        const SizedBox(height: 10),
+                        RecommendationsCard(
+                          content: state.recommendationMessage,
+                          recommendedApps: state.recommendedApps,
+                          getCategoryColor: AppColors.getCategoryColor,
+                        ),
+                        const SizedBox(height: 20),
+                        
+                        // 2. Pass the settingsState to the button so it uses the new intensity
+                        _buildTestNudgeButton(state, settingsState),
+                      ],
+                    ),
                   ),
-                ),
 
-                // --- LAYER 1: PERMISSION OVERLAY ---
-                if (!_isSystemPermissionGranted)
-                  _buildPermissionOverlay(),
-              ],
-            );
-          },
-        ),
+                  // --- LAYER 1: PERMISSION OVERLAY ---
+                  if (!_isSystemPermissionGranted)
+                    _buildPermissionOverlay(),
+                ],
+              );
+            },
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 
   // --- UI COMPONENTS ---
 
@@ -218,14 +225,13 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     );
   }
 
-    Widget _buildTestNudgeButton(DashboardState state) {
+  Widget _buildTestNudgeButton(DashboardState state, SettingsState settingsState) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: OutlinedButton.icon(
         onPressed: () async {
           // 1. Get current settings (intensity and goal)
-          final settings = context.read<SettingsCubit>().state.settings;
-          final intensity = settings.nudgeIntensity;
+          final intensity = settingsState.settings.nudgeIntensity;
 
           // 2. Determine target category
           final String focusCategory = state.recommendedApps.isNotEmpty 
