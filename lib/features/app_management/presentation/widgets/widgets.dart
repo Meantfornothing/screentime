@@ -7,3 +7,6 @@ export 'setting_card.dart';
 export 'slider_setting.dart';
 export 'timepicker_setting.dart';
 export 'insight_card.dart';
+export 'legend_item.dart';
+export 'ai_artwork_card.dart';
+export 'dashboard_legend.dart';

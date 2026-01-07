@@ -1,6 +1,6 @@
 // lib/core/services/notification_service.dart
 
-import 'dart:async'; // Required for StreamController
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -8,7 +8,6 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  // A broadcast stream to allow multiple widgets to listen for notification taps
   static final _onTapController = StreamController<String?>.broadcast();
   static Stream<String?> get onTapStream => _onTapController.stream;
 
@@ -34,13 +33,12 @@ class NotificationService {
     await _notificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (response) {
-        // Emit the payload to the stream
         _onTapController.add(response.payload);
         onNotificationResponse?.call(response);
       },
       onDidReceiveBackgroundNotificationResponse: onBackgroundNotificationResponse,
     );
-    // ADD THIS BLOCK: Request Android 13+ permissions explicitly
+
     final androidImplementation =
       _notificationsPlugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
@@ -50,7 +48,6 @@ class NotificationService {
     }
   }
 
-  /// Checks if the app was launched via a notification tap (Terminated state)
   static Future<NotificationResponse?> getAppLaunchDetails() async {
     final details = await _notificationsPlugin.getNotificationAppLaunchDetails();
     return details?.notificationResponse;
@@ -61,25 +58,26 @@ class NotificationService {
     required String title,
     required String body,
     String? payload,
+    // Added importance parameter to react to nudge intensity
+    Importance importance = Importance.max, 
   }) async {
-    // ... (rest of your existing showNotification logic)
     final BigTextStyleInformation bigTextStyleInformation =
         BigTextStyleInformation(
       body,
       htmlFormatBigText: true,
       contentTitle: '<b>$title</b>',
       htmlFormatContentTitle: true,
-      summaryText: 'Usage Alert',
+      summaryText: 'Goal Nudge', // Updated for clarity
       htmlFormatSummaryText: true,
     );
 
     final AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'usage_monitor_channel', 
-      'Usage Monitor', 
-      channelDescription: 'Notifications for screen time limits',
-      importance: Importance.max,
-      priority: Priority.high,
+      'realign_goals_channel', // Updated Channel ID
+      'ReAlign Goals',         // Updated Channel Name
+      channelDescription: 'Notifications to help you stick to your focus goals',
+      importance: importance,
+      priority: importance == Importance.max ? Priority.high : Priority.defaultPriority,
       showWhen: true,
       color: const Color(0xFFD4AF98),
       styleInformation: bigTextStyleInformation,
@@ -112,5 +110,25 @@ class NotificationService {
       platformChannelSpecifics,
       payload: payload,
     );
+  }
+}
+
+// --- NUDGE LOGIC ---
+// This class determines the "Strictness" of the message based on Maria's settings.
+class NudgeLogic {
+  static String getTitle(double intensity) {
+    if (intensity < 0.3) return "A gentle reminder";
+    if (intensity < 0.7) return "Focus ReAlign";
+    return "🚨 ACTION REQUIRED";
+  }
+
+  static String getBody(double intensity, String category) {
+    if (intensity < 0.3) {
+      return "Maria, perhaps it's time for some $category apps?";
+    } else if (intensity < 0.7) {
+      return "Time to shift gears! Switch to your $category apps now.";
+    } else {
+      return "Focus check! You're drifting. Get back to $category tools immediately.";
+    }
   }
 }

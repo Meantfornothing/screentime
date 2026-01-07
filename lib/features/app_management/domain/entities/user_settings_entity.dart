@@ -21,6 +21,26 @@ class UserSettingsEntity extends HiveObject {
     goalReduceStress,
   ];
 
+  // lib/features/app_management/domain/entities/user_settings_entity.dart
+
+  // Inside the UserSettingsEntity class:
+  static String getGoalDescription(String goal) {
+    switch (goal) {
+      case goalWorktool:
+        return "Focus on utility. We'll prioritize work apps and minimize distractions.";
+      case goalProductivePrecedence:
+        return "A balanced approach where productivity apps take the lead.";
+      case goalSocial:
+        return "Helpful reminders to stay connected without getting lost in feeds.";
+      case goalEntertainment:
+        return "Turn your phone into a dedicated media and gaming device.";
+      case goalRelaxingContent:
+      case goalReduceStress:
+        return "Emphasis on audiobooks, puzzles, and calm Swedish content.";
+      default:
+        return "Personalize your phone's behavior to match your day.";
+    }
+  }
   @HiveField(0) final double breakReminderFrequency; 
   @HiveField(1) final int dailyScreenTimeGoalMinutes; 
   @HiveField(2) final double nudgeIntensity; 
