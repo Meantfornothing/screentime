@@ -18,8 +18,8 @@ class AppAssignmentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final String categoryName = app.assignedCategoryName ?? 'Neutral';
     final Color categoryColor = AppColors.getCategoryColor(categoryName);
-    final Color chipColor = categoryColor.withOpacity(0.12);
-    final Color textColor = categoryColor;
+    final Color chipColor = categoryColor.withOpacity(0.4);
+    final Color textColor = Color.fromARGB(255, 61, 61, 61);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
