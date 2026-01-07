@@ -6,7 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GeminiService {
   static String get apiKey => dotenv.env['GEMINI_API_KEY'] ?? "";
-  static const String model = "gemini-2.5-flash";
+  static const String model = "gemini-2.5-flash-lite";
   static const String apiBase = "https://generativelanguage.googleapis.com/v1beta/models";
 
   static Future<String?> generateVisualPrompt({
@@ -19,10 +19,11 @@ class GeminiService {
         .join("\n");
 
     final systemPrompt = 
-        "You are an AI artist creating an abstract data visualization painting. "
-        "Create a cohesive composition where colors correspond to these percentages: "
-        "Productivity (Green geometric), Entertainment (Orange energy), Social (Purple bubbles), Relaxation (Blue waves). "
-        "Output ONLY a descriptive prompt in English (max 40 words).";
+    "You are an AI artist creating an abstract data visualization painting. "
+    "Create a cohesive composition where colors correspond to these percentages: "
+    "Productivity (Blue geometric), Entertainment (Orange energy), Social (Yellow bubbles), "
+    "Relaxation (Purple Waves), Neutral (Grey stone). " // FIX 2
+    "Output ONLY a descriptive prompt in English (max 40 words).";
 
     final url = Uri.parse("$apiBase/$model:generateContent?key=$apiKey");
     final payload = {

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFFD4AF98);
-  static const Color primaryVariant = Color(0xFFB8967E);
+  static const Color primary = Color.fromARGB(255, 155, 173, 137);
+  static const Color primaryVariant = Color.fromARGB(255, 159, 173, 144);
   static const Color background = Colors.white;
-  static const Color surface = Color(0xFFF8F9FA);
+  static const Color surface = Color.fromARGB(255, 199, 212, 186);
   static const Color textPrimary = Color(0xFF1A1A1A);
-  static const Color textSecondary = Color(0xFF757575);
+  static const Color textSecondary = Color.fromARGB(255, 61, 61, 61);
   static const Color error = Color(0xFFBA1A1A);
   static const Color success = Color(0xFF2E7D32);
   
@@ -41,7 +41,7 @@ class AppIconBox extends StatelessWidget {
 
   const AppIconBox({
     required this.icon,
-    this.color = AppColors.primary,
+    this.color = const Color.fromARGB(255, 67, 71, 63),
     this.size = 22.0,
     super.key,
   });

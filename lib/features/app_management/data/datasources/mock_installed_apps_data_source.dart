@@ -23,7 +23,7 @@ class MockInstalledAppsDataSourceImpl implements InstalledAppsDataSource {
 
   @override
   Future<List<InstalledApp>> getInstalledAppsFromOS() async {
-
+    // Ladda ikoner från assets
     final instagramIcon = await _getSafeAssetBytes('assets/icons/instagram.png');
     final facebookIcon = await _getSafeAssetBytes('assets/icons/facebook.png');
     final svtplayIcon = await _getSafeAssetBytes('assets/icons/svtplay.png');
@@ -35,12 +35,13 @@ class MockInstalledAppsDataSourceImpl implements InstalledAppsDataSource {
     final svdkorsordIcon = await _getSafeAssetBytes('assets/icons/svdkorsord.png');
     final bankidIcon = await _getSafeAssetBytes('assets/icons/bankid.png');
     final vaderIcon = await _getSafeAssetBytes('assets/icons/vader.png');
-    // Här definieras alla appar som systemet ska tro är installerade för Marias profil
+
+    // Returnera listan med tilldelade ikoner för Marias profil
     return [
       InstalledApp(
         packageName: 'com.facebook.katana',
         name: 'Facebook',
-        iconBytes: null,
+        iconBytes: facebookIcon,
       ),
       InstalledApp(
         packageName: 'com.instagram.android',
@@ -50,47 +51,47 @@ class MockInstalledAppsDataSourceImpl implements InstalledAppsDataSource {
       InstalledApp(
         packageName: 'se.svt.play',
         name: 'SVT Play',
-        iconBytes: null,
+        iconBytes: svtplayIcon,
       ),
       InstalledApp(
         packageName: 'com.google.android.googlequicksearchbox',
         name: 'Google',
-        iconBytes: null,
+        iconBytes: googleIcon,
       ),
       InstalledApp(
         packageName: 'com.google.android.youtube',
         name: 'YouTube',
-        iconBytes: null,
+        iconBytes: youtubeIcon,
       ),
       InstalledApp(
         packageName: 'com.facebook.orca',
         name: 'Messenger',
-        iconBytes: null,
+        iconBytes: messengerIcon,
       ),
       InstalledApp(
         packageName: 'com.android.server.telecom',
         name: 'Telefon',
-        iconBytes: null,
+        iconBytes: telefonIcon,
       ),
       InstalledApp(
         packageName: 'com.storytel.storytel',
         name: 'Storytel',
-        iconBytes: null,
+        iconBytes: storytelIcon,
       ),
       InstalledApp(
         packageName: 'se.svd.korsord',
         name: 'SVD Korsord',
-        iconBytes: null,
+        iconBytes: svdkorsordIcon,
       ),
       InstalledApp(
         packageName: 'com.bankid.mobile',
         name: 'Bank-ID',
-        iconBytes: null,
+        iconBytes: bankidIcon,
       ),
       InstalledApp(
         packageName: 'se.smhi.smhi',
         name: 'Väder',
-        iconBytes: null,
+        iconBytes: vaderIcon,
       ),
     ];
   }

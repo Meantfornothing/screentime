@@ -12,12 +12,12 @@ class SettingCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         // Use surface color defined for cards in app_visuals.dart
-        color: AppColors.surface, 
+        color: AppColors.background, 
         // Use the standardized card border radius (16.0)
         borderRadius: AppShapes.cardBorder, 
         border: Border.all(
           // Use primary brand color with low opacity for a soft border
-          color: AppColors.primary.withOpacity(0.3), 
+          color: AppColors.primary.withOpacity(0.7), 
           width: 1.0,
         ),
         boxShadow: [

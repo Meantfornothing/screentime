@@ -79,7 +79,7 @@ class _SliderSettingState extends State<SliderSetting> {
               divisions: widget.divisions,
               label: displayLabel.isNotEmpty ? displayLabel : null,
               activeColor: AppColors.primary, // Updated to brand beige
-              inactiveColor: AppColors.primary.withOpacity(0.2), // Softer primary tint
+              inactiveColor: AppColors.primary.withOpacity(0.4), // Softer primary tint
               onChanged: (double newValue) {
                 setState(() {
                   _currentValue = newValue;
