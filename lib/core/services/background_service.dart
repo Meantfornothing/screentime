@@ -33,7 +33,7 @@ Future<void> _checkUsageAndNotify() async {
   );
   
   await Hive.initFlutter();
-  if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(UserSettingsEntityAdapter());
+  if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(UserSettingsAdapter());
   if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(InstalledAppAdapter());
 
   final settingsBox = await Hive.openBox<UserSettingsEntity>('settings');

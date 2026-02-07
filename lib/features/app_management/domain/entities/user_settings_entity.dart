@@ -1,10 +1,8 @@
-// lib/features/app_management/domain/entities/user_settings_entity.dart
-
 import 'package:hive/hive.dart';
 
 @HiveType(typeId: 2) 
 class UserSettingsEntity extends HiveObject {
-  // Descriptive Goal Constants
+  // Goal Constants
   static const String goalWorktool = 'Use my phone as a worktool, not a distraction';
   static const String goalProductivePrecedence = 'Let productive apps take more place than other apps';
   static const String goalSocial = 'Use my phone to strengthen relations with others';
@@ -13,12 +11,8 @@ class UserSettingsEntity extends HiveObject {
   static const String goalReduceStress = 'Use my phone to reduce stress';
 
   static const List<String> allGoals = [
-    goalWorktool,
-    goalProductivePrecedence,
-    goalSocial,
-    goalEntertainment,
-    goalRelaxingContent,
-    goalReduceStress,
+    goalWorktool, goalProductivePrecedence, goalSocial,
+    goalEntertainment, goalRelaxingContent, goalReduceStress,
   ];
 
   @HiveField(0) final double breakReminderFrequency; 
@@ -38,12 +32,8 @@ class UserSettingsEntity extends HiveObject {
   });
 
   UserSettingsEntity copyWith({
-    double? breakReminderFrequency,
-    int? dailyScreenTimeGoalMinutes,
-    double? nudgeIntensity,
-    int? bedtimeHour,
-    int? bedtimeMinute,
-    String? userGoal,
+    double? breakReminderFrequency, int? dailyScreenTimeGoalMinutes,
+    double? nudgeIntensity, int? bedtimeHour, int? bedtimeMinute, String? userGoal,
   }) {
     return UserSettingsEntity(
       breakReminderFrequency: breakReminderFrequency ?? this.breakReminderFrequency,
@@ -56,8 +46,8 @@ class UserSettingsEntity extends HiveObject {
   }
 }
 
-// Manual Adapter Implementation - Ensure this is outside the class
-class UserSettingsEntityAdapter extends TypeAdapter<UserSettingsEntity> {
+// RENAMED to fix compilation error
+class UserSettingsAdapter extends TypeAdapter<UserSettingsEntity> {
   @override
   final int typeId = 2;
 
@@ -80,8 +70,7 @@ class UserSettingsEntityAdapter extends TypeAdapter<UserSettingsEntity> {
   @override
   void write(BinaryWriter writer, UserSettingsEntity obj) {
     writer
-      ..writeByte(6)
-      ..writeByte(0)..write(obj.breakReminderFrequency)
+      ..writeByte(6)..writeByte(0)..write(obj.breakReminderFrequency)
       ..writeByte(1)..write(obj.dailyScreenTimeGoalMinutes)
       ..writeByte(2)..write(obj.nudgeIntensity)
       ..writeByte(3)..write(obj.bedtimeHour)
